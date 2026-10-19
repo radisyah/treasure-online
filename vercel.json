@@ -1,0 +1,9 @@
+{
+  "outputDirectory": "public",
+  "regions": ["sin1"],
+  "functions": {
+    "api/room.js": {
+      "maxDuration": 10
+    }
+  }
+}
