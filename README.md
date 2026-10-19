@@ -41,6 +41,7 @@ Bila Redis belum terhubung, API membalas: *"Database belum dikonfigurasi…"*.
 
 ## Video layar pemain → Room Master (WebRTC) dan TURN
 Video **tidak lewat server Vercel**. Master membuat *offer*, pemain menjawab; server hanya menukar pesan sinyal lewat Redis (tidak ada WebSocket).
+Panel soal (HTML) tidak ikut tertangkap dari kanvas WebGL, jadi klien menggambar ulang panel itu ke kanvas siaran (`Net.drawPuzzle`): judul, timer, soal, pilihan (yang dipilih disorot), ketikan jawaban, petunjuk, dan umpan balik benar/salah tampil di layar Master secara langsung.
 Kualitas siaran: **640×360, 30 fps, ±800 kbps** per pemain (diturunkan dari 960×540@60 versi LAN agar kuat lewat internet; ubah `SW`, `SH`, `FPS`, `BITRATE` di objek `Net` pada `public/index.html`).
 Jaringan lemah → kualitas gambar yang turun, bukan fps (`maintain-framerate`). Cadangan JPEG lewat server **dihapus** karena butuh WebSocket.
 
