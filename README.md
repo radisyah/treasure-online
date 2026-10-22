@@ -39,12 +39,11 @@ Aturan khusus versi online:
 
 Bila Redis belum terhubung, API membalas: *"Database belum dikonfigurasi…"*.
 
-## Video layar pemain → Room Master (WebRTC) dan TURN
+## Pandangan pemain → Room Master (WebRTC DataChannel) dan TURN
 Video **tidak lewat server Vercel**. Master membuat *offer*, pemain menjawab; server hanya menukar pesan sinyal lewat Redis (tidak ada WebSocket).
 **Sinyal cepat (long-poll):** handshake dimulai begitu pemain selesai memuat level (Master mengirim *offer* ke pemain yang sudah `loaded`), jadi hitung mundur ±4 dtk dipakai untuk menyambungkan video dan gambar umumnya sudah tampil saat pertandingan mulai. Offer/answer dibaca lewat `GET /api/room?action=sig`: server menahan permintaan (maks. 5 dtk, cek Redis tiap 0,12 dtk) dan menjawab segera setelah pesan ada, sehingga pesan sampai dalam ±0,1 dtk, bukan menunggu polling 0,6–2 dtk. Polling `state`/`stat` tetap menjadi cadangan (mis. untuk offer ulang). Kredensial TURN juga diminta lebih awal (saat ronde dimulai) dan pengumpulan kandidat ICE tanpa TURN tidak lagi menunggu status `complete`.
-Panel soal (HTML) tidak ikut tertangkap dari kanvas WebGL, jadi klien menggambar ulang panel itu ke kanvas siaran (`Net.drawPuzzle`): judul, timer, soal, pilihan (yang dipilih disorot), ketikan jawaban, petunjuk, dan umpan balik benar/salah tampil di layar Master secara langsung.
-Kualitas siaran: **640×360 (dikunci), 24 fps, ±800 kbps** per pemain (diturunkan dari 960×540@60 versi LAN agar kuat lewat internet; ubah `SW`, `SH`, `FPS`, `BITRATE` di objek `Net` pada `public/index.html`).
-Resolusi dikunci di 360p (`maintain-resolution` + `contentHint='detail'`): bila jaringan tidak sanggup membawa 800 kbps, yang turun adalah fps (di bawah 24), bukan resolusinya. Cadangan JPEG lewat server **dihapus** karena butuh WebSocket.
+**Mode siaran data posisi (bukan video).** Pemain tidak lagi mengirim video. Lewat koneksi WebRTC yang sama, hanya data kecil yang dikirim lewat *DataChannel* (tanpa urutan, tanpa kirim ulang): posisi, arah hadap, dan flag jalan/lari/senter ±20× per detik, ditambah status peti, pintu, kartu, catatan, dan terminal tiap 0,5 dtk. Totalnya kira-kira 1–3 KB/dtk per pemain. Master membangun arena yang sama (level deterministik), lalu merender keempat pandangan sendiri dengan kamera yang sama seperti pemain, dihaluskan sehingga bisa tampil **360p (640×360) di 60 fps** mengikuti refresh layar. Kualitas tidak lagi bergantung pada wifi, hanya pada GPU laptop Master. Ubah `FW`/`FH` di objek `Net` untuk resolusi lain (mis. 960×540).
+Konsekuensi: tampilan Master mirip, bukan identik piksel demi piksel. Panel soal, partikel, dan toast milik pemain tidak ikut tampil. Soal yang sedang dikerjakan terlihat lewat baris status di bawah tiap tile. Kebutuhan TURN jauh lebih kecil, tetapi tetap disarankan bila jaringan memblokir P2P.
 
 **Agar Master bisa melihat dari SEMUA jaringan (4G/CGNAT, wifi sekolah/kantor, NAT ketat) wajib mengaktifkan server TURN (relay).**
 STUN saja hanya menembus sebagian jaringan.
@@ -71,7 +70,7 @@ Fungsi Vercel dipasang di region **sin1 (Singapura)**; pilih juga region Upstash
 
 Kredensial hanya diberikan server ke peserta room (`GET /api/room?action=ice`). Tanpa TURN, tile video menampilkan
 "server TURN belum diatur" bila jaringan memblokir P2P; skor dan status tetap tampil. Lalu-lintas yang lewat relay dihitung ke kuota penyedia
-(≈ 0,8 Mbps × 4 pemain ≈ 1,4 GB per jam bila semua lewat relay).
+(hanya beberapa KB/dtk per pemain).
 
 ## Layar penuh otomatis di HP
 - **Android (Chrome dll.)**: layar penuh + kunci landscape dicoba pada **setiap ketukan** sampai berhasil (browser mewajibkan gestur pengguna, jadi tidak bisa 100% tanpa ketukan), dan masuk lagi di ketukan berikutnya bila tidak sengaja keluar. Bila pemain sengaja keluar lewat tombol layar penuh, game tidak memaksanya masuk lagi.

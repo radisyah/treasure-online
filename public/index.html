@@ -1726,7 +1726,7 @@ let lastT=performance.now(),loopStarted=false;
 function loop(now){
   requestAnimationFrame(loop);
   const dt=Math.min(.1,(now-lastT)/1000);lastT=now;
-  try{update(dt);if(!G.spectator)renderer.render(scene,camera);Net.afterRender();}catch(e){console.error('Kesalahan pada loop game:',e);}
+  try{if(G.spectator){G.t+=dt;Net.mvFrame(dt);}else{update(dt);renderer.render(scene,camera);Net.afterRender();}}catch(e){console.error('Kesalahan pada loop game:',e);}
 }
 
 /* ===================== 16. MENU, PENGATURAN, INISIALISASI ===================== */
@@ -1873,8 +1873,10 @@ function bindTouch(){
 /* Transport: polling ke satu Vercel Function (/api/room) dengan state di Upstash Redis (pola sama dengan angry-birds-online).
    Kode room 5 karakter, token sesi di localStorage. Video layar pemain -> Room Master lewat WebRTC (Master membuat offer,
    pemain menjawab; sinyal lewat /api/room, video TIDAK lewat server). Tanpa server TURN, video hanya tembus sebagian jaringan. */
+const DEVST=['Undiscovered','Discovered','Interacting','Puzzle Active','Failed','Disabled'];
 const Net={
- FW:576,FH:324,SW:640,SH:360,FPS:24,BITRATE:800000,   /* siaran video 360p · 24 fps, resolusi dikunci (ubah di sini bila perlu) */
+ FW:640,FH:360,POSE_HZ:20,   /* tile Master dirender lokal 640x360 (360p) @ refresh layar (60 fps); pemain hanya mengirim data posisi ±20x/dtk (ubah FW/FH untuk resolusi lain) */
+ dc:null,snapT:0,mv:null,
  API:'/api/room',SKEY:'th3d_online_session',
  STUN_ONLY:{iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}],relay:false},
  on:null,role:null,slot:0,code:'',name:'',room:null,live:false,joined:false,
@@ -2109,7 +2111,7 @@ const Net={
  startMatch(level){
   this.live=false;this.stopStats();this.closeRtc();
   this.getIce();   // minta kredensial STUN/TURN sekarang (paralel dengan pemuatan level) supaya handshake tidak menunggu
-  if(this.role==='master'){this.mvReset();UI.show('masterview');return;}
+  if(this.role==='master'){this.mvReset();UI.show('masterview');this.mvInit(level);return;}
   this.setLoading('MEMUAT LEVEL…','Menyiapkan arena petualangan');
   loadLevel(clamp(level,1,LEVELS.length)-1);
  },
@@ -2210,123 +2212,28 @@ const Net={
  },
 
  /* ---- siaran layar pemain (WebRTC, 360p · 24 fps). Master = penawar (offer), pemain = penjawab (answer) ---- */
+ /* ---- siaran DATA posisi lewat WebRTC DataChannel (±1–3 KB/dtk). Master merender sendiri dari data ini. ---- */
  afterRender(){
-  if(!G.online||this.role!=='player'||!G.run||!this.live||G.run.finished||!this.sctx)return;
-  const now=performance.now();if(now-this.lastDraw<1000/this.FPS-4)return;
-  const gl=$('gl');if(!gl.width||!gl.height)return;
-  this.lastDraw=now;this.drawTo(this.sctx,this.SW,this.SH,gl);
-  // panel soal adalah elemen HTML (bukan bagian kanvas WebGL) → gambar ulang ke siaran supaya Room Master melihat soal yang sedang dikerjakan
-  if(G.state==='PUZZLE_ACTIVE'&&P.open){try{this.drawPuzzle(this.sctx,this.SW,this.SH);}catch(e){}}
- },
- drawTo(ctx,W,H,gl){
-  const sw=gl.width,sh=gl.height,ar=W/H;let cw=sw,ch=sw/ar;if(ch>sh){ch=sh;cw=sh*ar;}
-  ctx.drawImage(gl,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,W,H);
- },
- /* ---- gambar ulang panel soal ke kanvas siaran (dibaca dari panel HTML aslinya, jadi selalu sinkron, ±24 fps) ---- */
- wrapText(ctx,text,maxW){
-  const out=[];
-  String(text||'').split('\n').forEach(par=>{
-   if(!par){out.push('');return;}
-   let line='';
-   par.split(' ').forEach(w=>{
-    const t=line?line+' '+w:w;
-    if(!line||ctx.measureText(t).width<=maxW){
-     line=t;
-     while(line.length>1&&ctx.measureText(line).width>maxW){let k=line.length-1;while(k>1&&ctx.measureText(line.slice(0,k)).width>maxW)k--;out.push(line.slice(0,k));line=line.slice(k);}
-    }else{out.push(line);line=w;}
-   });
-   out.push(line);
-  });
-  return out;
- },
- fitLines(ctx,text,maxW,maxLines){
-  let ls=this.wrapText(ctx,text,maxW);
-  if(ls.length>maxLines){ls=ls.slice(0,maxLines);let l=ls[maxLines-1];while(l.length>1&&ctx.measureText(l+'…').width>maxW)l=l.slice(0,-1);ls[maxLines-1]=l+'…';}
-  return ls;
- },
- drawPuzzle(ctx,W,H){
-  const g=id=>document.getElementById(id),txt=id=>{const e=g(id);return e?e.textContent:'';};
-  const M=12,pad=12,x0=M,y0=M,pw=W-2*M,ph=H-2*M,iw=pw-2*pad,bottom=y0+ph-pad,SANS='"Segoe UI",Roboto,Arial,sans-serif',MONO='Consolas,"Courier New",monospace';
-  ctx.save();
-  ctx.fillStyle='rgba(5,12,24,.93)';ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='rgba(9,20,38,.98)';ctx.fillRect(x0,y0,pw,ph);
-  ctx.strokeStyle='#35e0ff';ctx.lineWidth=2;ctx.strokeRect(x0,y0,pw,ph);
-  ctx.beginPath();ctx.rect(x0,y0,pw,ph);ctx.clip();
-  ctx.textBaseline='top';ctx.textAlign='left';
-  let y=y0+pad;
-  // judul + tahap
-  ctx.fillStyle='#e6f1ff';ctx.font='bold 15px '+SANS;ctx.fillText(this.fitLines(ctx,txt('pTitle'),iw*.62,1)[0]||'',x0+pad,y);
-  ctx.fillStyle='#8aa4c4';ctx.font='13px '+SANS;ctx.textAlign='right';ctx.fillText(txt('pStage'),x0+pw-pad,y+1);ctx.textAlign='left';y+=22;
-  // timer + bar
-  ctx.fillStyle='#8aa4c4';ctx.font='13px '+SANS;ctx.fillText('Waktu peti  '+txt('pDevTime')+'     Waktu misi  '+txt('pMissionTime'),x0+pad,y);y+=19;
-  const bar=g('pBar'),f=Math.max(0,Math.min(1,(parseFloat(bar&&bar.style.width)||0)/100));
-  ctx.fillStyle='#0d2238';ctx.fillRect(x0+pad,y,iw,6);ctx.fillStyle=bar&&bar.classList.contains('warn')?'#ff4d5e':'#35e0ff';ctx.fillRect(x0+pad,y,iw*f,6);y+=14;
-  // kategori
-  ctx.fillStyle='#ffd23f';ctx.font='bold 12px '+SANS;ctx.fillText(txt('pCat'),x0+pad,y);y+=19;
-  // soal
-  const q=P.q,isNum=!!(q&&q.kind==='num');
-  let qs=19,ql;ctx.font='bold '+qs+'px '+MONO;ql=this.wrapText(ctx,txt('pText'),iw);
-  if(ql.length>4){qs=16;ctx.font='bold '+qs+'px '+MONO;ql=this.fitLines(ctx,txt('pText'),iw,5);}
-  ctx.fillStyle='#e6f1ff';ql.forEach((l,i)=>ctx.fillText(l,x0+pad,y+i*(qs+5)));y+=ql.length*(qs+5)+8;
-  // jawaban: kotak isian (soal angka) atau pilihan A–D
-  const asking=P.phase==='ask';
-  if(isNum){
-   const inp=g('pInput'),val=inp?inp.value:'';
-   ctx.fillStyle='#07111f';ctx.fillRect(x0+pad,y,iw,32);ctx.strokeStyle=asking?'#ffd23f':'#1f4a6e';ctx.lineWidth=2;ctx.strokeRect(x0+pad,y,iw,32);
-   ctx.font='bold 19px '+MONO;
-   if(val){ctx.fillStyle='#e6f1ff';ctx.fillText(val+(asking&&Math.floor(performance.now()/500)%2?'│':''),x0+pad+10,y+6);}
-   else{ctx.fillStyle='#4d6a8c';ctx.fillText(asking&&Math.floor(performance.now()/500)%2?'│':'',x0+pad+10,y+6);ctx.font='13px '+SANS;ctx.fillText('Pemain sedang mengetik jawaban…',x0+pad+22,y+9);}
-   y+=40;
-  }else{
-   const btns=g('pOptions')?[...g('pOptions').children]:[],bw=(iw-8)/2,bh=28;
-   btns.forEach((b,i)=>{
-    const bx=x0+pad+(i%2)*(bw+8),by=y+Math.floor(i/2)*(bh+6),sel=b.classList.contains('sel'),right=P.phase==='review'&&q&&q.answer===i;
-    ctx.fillStyle=right?'rgba(61,255,154,.16)':sel?'rgba(255,210,63,.16)':'#0d2238';ctx.fillRect(bx,by,bw,bh);
-    ctx.strokeStyle=right?'#3dff9a':sel?'#ffd23f':'#1f4a6e';ctx.lineWidth=sel||right?2:1;ctx.strokeRect(bx,by,bw,bh);
-    ctx.fillStyle='#e6f1ff';ctx.font='14px '+SANS;ctx.fillText(this.fitLines(ctx,b.textContent,bw-16,1)[0]||'',bx+8,by+7);
-   });
-   y+=Math.ceil(btns.length/2)*(bh+6)+4;
-  }
-  // petunjuk + umpan balik (benar/salah) — umpan balik diprioritaskan
-  const fb=g('pFb'),fbCls=fb?fb.className:'',fbOn=/\b(good|bad|warn)\b/.test(fbCls)&&fb.textContent;
-  ctx.font='12px '+SANS;
-  const LH=15,rem=bottom-y;
-  let fbL=[],hL=[];
-  if(fbOn)fbL=this.fitLines(ctx,fb.textContent,iw-16,Math.max(1,Math.min(4,Math.floor((rem-12)/LH))));
-  const left=rem-(fbL.length?fbL.length*LH+14:0);
-  const ht=txt('pHintBox');if(ht&&left>=LH)hL=this.fitLines(ctx,ht,iw,Math.min(2,Math.floor(left/LH)));
-  ctx.fillStyle='#bfe9ff';hL.forEach((l,i)=>ctx.fillText(l,x0+pad,y+i*LH));y+=hL.length*LH+(hL.length?4:0);
-  if(fbL.length){
-   const c=/\bgood\b/.test(fbCls)?['#3dff9a','rgba(61,255,154,.08)']:/\bbad\b/.test(fbCls)?['#ff9aa5','rgba(255,77,94,.10)']:['#ffd23f','rgba(255,210,63,.08)'];
-   const bh2=fbL.length*LH+10;ctx.fillStyle=c[1];ctx.fillRect(x0+pad,y,iw,bh2);ctx.strokeStyle=c[0];ctx.lineWidth=1;ctx.strokeRect(x0+pad,y,iw,bh2);
-   ctx.fillStyle=c[0];fbL.forEach((l,i)=>ctx.fillText(l,x0+pad+8,y+5+i*LH));
-  }
-  ctx.restore();
- },
- drawWait(txt){
-  const c=this.sctx;if(!c||!this.feed)return;
-  c.fillStyle='#050c18';c.fillRect(0,0,this.SW,this.SH);
-  c.fillStyle='#35e0ff';c.font='bold 30px "Segoe UI",Roboto,Arial,sans-serif';c.textAlign='center';c.textBaseline='middle';
-  c.fillText(txt,this.SW/2,this.SH/2);c.textAlign='left';c.textBaseline='alphabetic';
- },
- startFeed(){
-  this.stopFeed();
-  if(typeof RTCPeerConnection==='undefined'||!HTMLCanvasElement.prototype.captureStream)return;
+  if(!G.online||this.role!=='player'||!G.run||!this.live||G.run.finished)return;
+  const dc=this.dc;if(!dc||dc.readyState!=='open')return;
+  const now=performance.now();if(now-this.lastDraw<1000/this.POSE_HZ-2)return;
+  this.lastDraw=now;
   try{
-   if(!this.scv){this.scv=document.createElement('canvas');this.scv.width=this.SW;this.scv.height=this.SH;}
-   const ctx=this.scv.getContext('2d',{alpha:false});ctx.fillStyle='#000';ctx.fillRect(0,0,this.SW,this.SH);
-   const stream=this.scv.captureStream(this.FPS);
-   stream.getVideoTracks().forEach(t=>{try{t.contentHint='detail';}catch(e){}});
-   this.feed={stream};this.sctx=ctx;this.sendN=0;
-   // sebelum gameplay mulai, kanvas tidak berubah → gambar ulang pelan-pelan agar Master tetap menerima bingkai (tile tidak hitam/beku)
-   this.waitT=setInterval(()=>{if(!this.feed||this.live){clearInterval(this.waitT);this.waitT=0;return;}this.drawWait((this.waitTxt||'Bersiap')+'.'.repeat(1+Math.floor(performance.now()/400)%3));},400);
-  }catch(e){console.warn('Siaran video tidak tersedia',e);this.feed=null;this.sctx=null;}
+   dc.send(JSON.stringify({p:[+player.x.toFixed(2),+player.z.toFixed(2),+player.yaw.toFixed(3),(player.moving?1:0)|(player.sprinting?2:0)|(player.flash?4:0)]}));
+   if(now-this.snapT>500){this.snapT=now;const sn=this.snapshot();if(sn)dc.send(JSON.stringify({s:sn}));}   // status peti/pintu/kartu dikirim ulang tiap 0,5 dtk (kanal boleh kehilangan paket)
+  }catch(e){}
  },
+ snapshot(){
+  const w=world;if(!w)return null;
+  return {d:w.devs.map(d=>[Math.max(0,DEVST.indexOf(d.status)),Math.round(d.timeLeft),Math.round(d.coolT||0)]),o:w.doors.map(d=>(d.open||d.opening)?1:0),c:w.cards.map(c=>c.taken?1:0),n:w.notes.map(n=>n.read?1:0),t:w.terms.map(t=>t.solved?1:0)};
+ },
+ bindDc(ch){this.dc=ch;ch.onclose=()=>{if(this.dc===ch)this.dc=null;};},
+ drawWait(){},
+ startFeed(){this.stopFeed();this.feed={};this.snapT=0;},
  stopFeed(){
-  clearInterval(this.waitT);this.waitT=0;this.offerLoop=null;
+  this.offerLoop=null;
   if(this.sendPC){try{this.sendPC.close();}catch(e){}this.sendPC=null;}
-  if(this.feed){this.feed.stream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});this.feed=null;}
-  this.sctx=null;this.sendN=0;
+  this.dc=null;this.feed=null;this.sendN=0;
  },
  /* STUN + TURN dari server (TURN = relay agar video sampai di semua jaringan). Gagal → STUN saja. */
  getIce(){
@@ -2373,7 +2280,7 @@ const Net={
    if(!this.on||this.feed!==feed)return;
    if(this.sendPC){try{this.sendPC.close();}catch(e){}this.sendPC=null;}
    const pc=this.sendPC=new RTCPeerConnection(ice);
-   feed.stream.getTracks().forEach(t=>pc.addTrack(t,feed.stream));
+   pc.ondatachannel=ev=>this.bindDc(ev.channel);
    await pc.setRemoteDescription({type:'offer',sdp:offer.sdp});
    this.capSender(pc);
    await pc.setLocalDescription(await pc.createAnswer());
@@ -2420,8 +2327,7 @@ const Net={
   // percobaan ke-2 dst. (±9 dtk belum tersambung): paksa lewat relay TURN (jalur P2P/STUN terbukti tidak tembus di jaringan ini)
   const cfg=(n>=2&&ice.relay)?Object.assign({},ice,{iceTransportPolicy:'relay'}):ice;
   const pc=new RTCPeerConnection(cfg),l=this.links[slot]={pc,n,an:prev?prev.an:0,t:Date.now(),ok:false,busy:true};
-  pc.addTransceiver('video',{direction:'recvonly'});
-  pc.ontrack=ev=>{this.lowLatency(ev.receiver);t.vid.srcObject=ev.streams[0]||new MediaStream([ev.track]);t.vid.play().catch(()=>{});};
+  const dc=pc.createDataChannel('pose',{ordered:false,maxRetransmits:0});dc.onmessage=ev=>this.mvRecv(slot,ev.data);
   pc.onconnectionstatechange=()=>{l.ok=pc.connectionState==='connected';this.updateTiles();};
   try{
    await pc.setLocalDescription(await pc.createOffer());
@@ -2468,16 +2374,73 @@ const Net={
   });
  },
  closeRtc(){
-  this.stopFeed();this.closeLinks();
+  this.mv=null;this.stopFeed();this.closeLinks();
   this.tiles.forEach(t=>{t.vid.srcObject=null;t.vid.style.display='none';t.cv.style.display='';t.fps.textContent='';t.got=false;});
  },
  linkText(slot){
   const l=this.links[slot];
-  if(!l||l.n<=2)return 'Menyambungkan video…';
-  return this.iceRelay?'📡 Video belum tersambung,\nmencoba lagi… (skor tetap tampil)':'📡 Video tak bisa tersambung:\nserver TURN belum diatur (lihat README)';
+  if(!l||l.n<=2)return 'Menyambungkan…';
+  return this.iceRelay?'📡 Belum tersambung,\nmencoba lagi… (skor tetap tampil)':'📡 Tidak bisa tersambung:\nserver TURN belum diatur (lihat README)';
  },
 
  /* ---- tampilan room master ---- */
+ /* ---- Master merender sendiri keempat pandangan dari data posisi (kamera sama seperti pemain) ---- */
+ mvInit(level){
+  this.mv={slots:{},ready:false,fr:0,t0:performance.now()};
+  const mv=this.mv;
+  setTimeout(()=>{try{buildWorld(LEVELS[clamp(level,1,LEVELS.length)-1]);if(this.mv===mv)mv.ready=true;}catch(e){console.error('Master gagal membangun arena',e);}},80);
+ },
+ mvRecv(slot,txt){
+  const mv=this.mv;if(!mv)return;
+  let m;try{m=JSON.parse(txt);}catch(e){return;}
+  const s=mv.slots[slot]||(mv.slots[slot]={cur:null,tgt:null,snap:null});
+  if(m.p){
+   const q=m.p;s.tgt={x:q[0],z:q[1],yaw:q[2],fl:q[3]};
+   if(!s.cur)s.cur={x:q[0],z:q[1],yaw:q[2],fl:q[3],walk:0};
+   const t=this.tiles[slot-2];if(t&&!t.got){t.got=true;this.updateTiles();}
+  }else if(m.s)s.snap=m.s;
+ },
+ mvApply(s,c){
+  const w=world;
+  player.x=c.x;player.z=c.z;player.yaw=c.yaw;player.moving=!!(c.fl&1);player.walkT=c.walk;player.flash=!!(c.fl&4);
+  const st=G.state;G.state='PLAYING';animatePlayer(0);G.state=st;
+  camera.position.set(c.x,CFG.CAM.height,c.z+CFG.CAM.back);camera.lookAt(c.x,.4,c.z-.5);
+  const sn=s.snap;if(!sn)return;
+  w.devs.forEach((d,i)=>{
+   const q=sn.d[i];if(!q)return;
+   d.status=DEVST[q[0]]||'Undiscovered';d.timeLeft=q[1];d.coolT=q[2];
+   let col=0xff4d5e,k=Math.sin(G.t*(d.status==='Failed'?10:4))>0?1.3:.25;
+   if(d.status==='Disabled'){col=0x3dff9a;k=1;}else if(d.status==='Puzzle Active'||d.status==='Interacting'){col=0xffd23f;k=1;}
+   d.lampMat.color.setHex(col);d.lampMat.emissive.setHex(col);d.lampMat.emissiveIntensity=k;
+   const on=d.status==='Disabled';d.lid.rotation.x=on?-1.9:0;d.pile.visible=on;d.glow.intensity=on?.35:.7;
+   if(Math.abs(d.x-c.x)+Math.abs(d.z-c.z)<26){const key=d.status+'|'+d.timeLeft+'|'+Math.ceil(d.coolT);if(d._k!==key){d._k=key;drawDevScreen(d);}}   // layar peti hanya digambar ulang bila terlihat
+  });
+  w.doors.forEach((d,i)=>{const o=sn.o[i]?1:0;d.open=!!o;d.opening=false;d.openT=o;d.slab.position.y=CFG.WALL_H/2-o*(CFG.WALL_H+.1);d.lampMat.color.setHex(o?0x3dff9a:0xff4d5e);});
+  w.cards.forEach((k,i)=>{const tk=!!sn.c[i];k.taken=tk;k.mesh.visible=!tk;k.halo.visible=!tk;});
+  w.notes.forEach((n,i)=>{n.read=!!sn.n[i];});
+  w.terms.forEach((tm,i)=>{const v=!!sn.t[i];if(tm.solved!==v){tm.solved=v;drawTermScreen(tm);}});
+ },
+ mvFrame(dt){
+  const mv=this.mv;
+  if(!mv||!mv.ready||this.role!=='master'||UI.cur!=='masterview'||!this.room||!world)return;
+  const W=this.FW,H=this.FH,cv=renderer.domElement;
+  if(cv.width!==W||cv.height!==H){renderer.setPixelRatio(1);renderer.setSize(W,H,false);camera.aspect=W/H;camera.updateProjectionMatrix();}
+  const now=performance.now(),k=1-Math.exp(-dt*18);
+  this.room.players.forEach(p=>{
+   if(!p||!p.part||p.result||!p.connected)return;
+   const s=mv.slots[p.slot],t=this.tiles[p.slot-2];
+   if(!s||!s.cur||!t)return;
+   const c=s.cur,g=s.tgt;
+   c.x+=(g.x-c.x)*k;c.z+=(g.z-c.z)*k;
+   let dy=g.yaw-c.yaw;while(dy>Math.PI)dy-=2*Math.PI;while(dy<-Math.PI)dy+=2*Math.PI;c.yaw+=dy*k;
+   c.fl=g.fl;if(c.fl&1)c.walk+=dt*(c.fl&2?14:9);
+   this.mvApply(s,c);
+   renderer.render(scene,camera);
+   t.ctx.drawImage(cv,0,0,W,H);t.lastVf=now;
+  });
+  mv.fr++;
+  if(now-mv.t0>=1000){const f=Math.round(mv.fr*1000/(now-mv.t0));mv.fr=0;mv.t0=now;this.tiles.forEach(t=>{t.fps.textContent=t.got?f+' FPS':'';});}
+ },
  onStat(m){
   const t=this.tiles[m.slot-2];if(!t)return;
   t.f1.textContent='⏱ '+fmtTime(m.time);
@@ -2505,7 +2468,7 @@ const Net={
     ov=(rs.status==='win'?'✔ SELESAI':rs.status==='dc'?'⚠ TERPUTUS':'✖ GAGAL')+'\n'+rs.score+' poin'+(rs.status!=='win'&&rs.reason?'\n'+rs.reason:'');
    }
    else if(!p.connected)ov='⚠ TERPUTUS';
-   else if(rm.phase==='loading'&&!t.got)ov=p.loaded?'Menyambungkan video…':'Memuat level…';
+   else if(rm.phase==='loading'&&!t.got)ov=p.loaded?'Menyambungkan…':'Memuat level…';
    else if(rm.phase==='playing'&&!t.got)ov=this.linkText(p.slot);
    else if(rm.phase==='lobby')ov=p.ready?'SIAP':'Belum siap';
    t.ov.textContent=ov;t.ov.classList.toggle('hide',!ov);
