@@ -290,6 +290,37 @@ body.touch .btn.small{min-height:2.4rem;padding:.4rem .8rem}
 @media (max-width:700px) and (min-height:561px){
  .pcols{display:block}
 }
+
+/* ===== SEMUA LAYAR: TANPA SCROLL DI HP ===== */
+.screen{overflow:hidden}
+.card{overflow:hidden}
+@media (max-height:560px){
+ .screen:not(#menu):not(#masterview){padding:max(.4rem,env(safe-area-inset-top)) max(.6rem,env(safe-area-inset-right)) max(.4rem,env(safe-area-inset-bottom)) max(.6rem,env(safe-area-inset-left))}
+ .card{padding:.5rem .8rem}
+ .card h2{font-size:1.05rem;margin:0 0 .3rem;letter-spacing:.04em}
+ .card h3{margin:.4rem 0 .15rem;font-size:.85rem}
+ .card p,.card li{font-size:.8rem;line-height:1.35}
+ .card ul{margin:.15rem 0}
+ .row{margin-top:.45rem;gap:.4rem}
+ .btn{min-height:2.2rem;padding:.3rem .7rem;font-size:.85rem}
+ .col{gap:.35rem}
+ table.t td,table.t th{padding:.15rem .4rem;font-size:.76rem}
+ .kbd{font-size:.72rem}
+ .setrow{padding:.25rem 0}
+ .lvl{margin:.2rem 0;padding:.3rem .6rem;gap:.5rem}
+ .lvl .n{font-size:1.2rem}
+ #levels .card,#settings .card,#guide .card{width:min(900px,100%)}
+ #levelList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:.6rem}
+ .sgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:1.2rem}
+ .gcols{column-count:2;column-gap:1.2rem}
+ .gcols table,.gcols ul,.gcols p{break-inside:avoid}
+ .gcols h3{break-after:avoid}
+ #pause .card{width:min(420px,100%)!important}
+ #pause .card.col{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+ #pause .card.col h2{grid-column:1/-1;margin:0}
+ #pause #pMenu{grid-column:1/-1}
+ #notebox{bottom:5.5rem}
+}
 </style>
 </head>
 <body>
@@ -415,6 +446,7 @@ show(0);
 <div id="levels" class="screen"><div class="card"><h2>PILIH LEVEL</h2><div id="levelList"></div><div class="row"><button class="btn" data-back>KEMBALI</button></div></div></div>
 
 <div id="settings" class="screen"><div class="card"><h2>PENGATURAN</h2>
+  <div class="sgrid">
   <div class="setrow"><label for="sMaster">Master Volume</label><input id="sMaster" type="range" min="0" max="1" step="0.05"></div>
   <div class="setrow"><label for="sSfx">Efek Suara</label><input id="sSfx" type="checkbox"></div>
   <div class="setrow"><label for="sMusic">Musik &amp; Ambience</label><input id="sMusic" type="checkbox"></div>
@@ -422,10 +454,12 @@ show(0);
   <div class="setrow"><label for="sFx">Intensitas Efek Visual</label><select id="sFx"><option value="0">Mati</option><option value="0.5">Rendah</option><option value="1">Normal</option><option value="1.6">Tinggi</option></select></div>
   <div class="setrow"><label for="sCam">Kehalusan Kamera</label><input id="sCam" type="range" min="0" max="1" step="0.05"></div>
   <div class="setrow"><label for="sUi">Ukuran Antarmuka</label><select id="sUi"><option value="0.9">Kecil</option><option value="1">Normal</option><option value="1.15">Besar</option></select></div>
+    </div>
   <div class="row"><button class="btn danger" id="sReset">RESET PROGRES</button><button class="btn" data-back>KEMBALI</button></div>
 </div></div>
 
 <div id="guide" class="screen"><div class="card"><h2>PANDUAN</h2>
+  <div class="gcols">
   <h3>Kontrol</h3>
   <table class="t">
   <tr><td><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span></td><td>Bergerak (relatif terhadap layar)</td></tr>
@@ -450,6 +484,7 @@ show(0);
   <h3>Peringkat</h3>
   <p>Peringkat dihitung dari waktu terpakai terhadap batas waktu level: S ≤ 35%, A ≤ 50%, B ≤ 65%, C ≤ 80%, D di atasnya. Rekor terbaik tersimpan per perangkat.</p>
   <p class="dim">Seluruh petualangan ini fiktif.</p>
+    </div>
   <div class="row"><button class="btn" data-back>TUTUP</button></div>
 </div></div>
 
@@ -2573,24 +2608,27 @@ function boot(){
 boot();
 })();
 
-/* Pengaman tanpa-scroll: bila isi kartu terminal/peti lebih tinggi dari layar, skala dikecilkan otomatis */
+/* Pengaman tanpa-scroll: bila isi layar apa pun melebihi layar HP, skala dikecilkan otomatis */
 (function(){
-  const card=document.getElementById('pCard'),scr=document.getElementById('puzzle');
-  if(!card||!scr)return;
+  const screens=[...document.querySelectorAll('.screen')].filter(el=>el.id!=='masterview'&&el.id!=='mapfull'&&el.id!=='loading'&&el.id!=='error');
   let raf=0;
+  function over(sc,w){return sc.scrollHeight>sc.clientHeight+1||sc.scrollWidth>sc.clientWidth+1||w.scrollHeight>w.clientHeight+1||w.scrollWidth>w.clientWidth+1;}
   function fit(){
     raf=0;
-    if(!scr.classList.contains('show'))return;
-    card.style.zoom='1';
-    const over=()=>card.scrollHeight>card.clientHeight+1||card.scrollWidth>card.clientWidth+1;
-    let z=1;
-    while(over()&&z>0.5){z=Math.round((z-0.05)*100)/100;card.style.zoom=String(z);}
+    screens.forEach(sc=>{
+      if(!sc.classList.contains('show'))return;
+      const w=sc.firstElementChild;if(!w)return;
+      w.style.zoom='1';
+      let z=1;
+      while(over(sc,w)&&z>0.4){z=Math.round((z-0.05)*100)/100;w.style.zoom=String(z);}
+    });
     mo.takeRecords();
   }
   function sched(){if(!raf)raf=requestAnimationFrame(fit);}
   const mo=new MutationObserver(sched);
-  mo.observe(card,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','style']});
-  new MutationObserver(sched).observe(scr,{attributes:true,attributeFilter:['class']});
+  screens.forEach(sc=>{
+    mo.observe(sc,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','style','disabled']});
+  });
   window.addEventListener('resize',sched);
   window.addEventListener('orientationchange',()=>setTimeout(sched,200));
   if(window.visualViewport)window.visualViewport.addEventListener('resize',sched);
