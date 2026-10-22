@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#050912">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>TREASURE HUNTER 3D: Math Under Pressure</title>
+<title>TREAHUNT</title>
 <style>
 :root{--bg:#050912;--panel:rgba(9,20,38,.95);--line:#1f4a6e;--cyan:#35e0ff;--yellow:#ffd23f;--red:#ff4d5e;--green:#3dff9a;--text:#e6f1ff;--dim:#8aa4c4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{font-size:16px;height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -251,12 +251,32 @@ body.touch .btn.small{min-height:2.4rem;padding:.4rem .8rem}
 #mvBar b{color:var(--yellow);letter-spacing:.06em}
 #mvInfo{flex:1;min-width:12rem;font:700 .95rem Consolas,monospace;color:var(--cyan)}
 #mvGrid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:.5rem}
+.mvt.empty{display:none}
+#mvGrid.n1{grid-template-columns:1fr;grid-template-rows:1fr}
+#mvGrid.n2{grid-template-columns:1fr 1fr;grid-template-rows:1fr}
+#mvGrid.zoomed{grid-template-columns:1fr;grid-template-rows:1fr}
+#mvGrid.zoomed .mvt:not(.zoom){display:none}
+#mvGrid.zoomed .mvhud{font-size:.95rem}#mvGrid.zoomed .mvq{font-size:1rem}#mvGrid.zoomed .mvq .qt{font-size:1.15rem}
+.mvw{cursor:zoom-in}#mvGrid.zoomed .mvw{cursor:zoom-out}
 .mvt{display:flex;flex-direction:column;min-height:0;min-width:0;border:1px solid var(--line);border-radius:8px;background:#07111f;overflow:hidden}
 .mvh{display:flex;gap:.6rem;align-items:baseline;padding:.25rem .6rem;background:#0b1d33;border-bottom:1px solid var(--line);font-size:.9rem}
 .mvh b{color:var(--cyan);flex:none}
 .mvh .mvn{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mvw{position:relative;flex:1;min-height:0;background:#000}
 .mvw canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.mvw canvas.mvmap{inset:auto;right:.3rem;bottom:.3rem;width:34%;height:auto;aspect-ratio:220/150;border:1px solid #2a6a96;border-radius:6px;background:rgba(3,8,18,.72);z-index:3;object-fit:fill}
+.mvw canvas.mvmap.full{inset:0;width:100%;height:100%;aspect-ratio:auto;border-radius:0;border:0;background:rgba(3,8,18,.92);object-fit:contain}
+.mvhud{position:absolute;left:.3rem;top:.3rem;z-index:3;max-width:60%;font:700 .74rem Consolas,monospace;color:#e8f1ff;background:rgba(3,8,18,.62);border:1px solid #1d4668;border-radius:6px;padding:.2rem .45rem;pointer-events:none;text-shadow:0 0 4px #000}
+.mvhud .dim{color:#8fa6c0}.mvhud ul{list-style:none;margin:.25rem 0 0;padding:0;font-weight:600;line-height:1.3}.mvhud li.ok{color:#3dff9a}.mvhud li.bad{color:#ff7a85}.mvhud li.dim{color:#8fa6c0}
+.mvbar{display:inline-block;width:3.2rem;height:.5rem;background:#1a2a3d;border-radius:3px;vertical-align:middle;overflow:hidden}.mvbar i{display:block;height:100%;background:#3dff9a}
+.mvq{position:absolute;left:.3rem;right:.3rem;bottom:.3rem;z-index:4;max-height:78%;overflow:hidden;background:rgba(5,12,24,.93);border:2px solid #ffd23f;border-radius:8px;padding:.35rem .6rem;font:600 .8rem/1.3 Consolas,monospace;color:#e8f1ff;display:none}
+.mvq .qh{display:flex;gap:.6rem;justify-content:space-between;color:#ffd23f;font-weight:800}.mvq .qc{color:#35e0ff;font-size:.72rem;margin-top:.1rem}
+.mvq .qt{font-size:.9rem;margin:.15rem 0;white-space:pre-wrap}.mvq .qo{display:grid;grid-template-columns:1fr 1fr;gap:.2rem}
+.mvq .qo span{border:1px solid #2a6a96;border-radius:5px;padding:.1rem .4rem;background:#0b1d33}.mvq .qo span.sel{border-color:#ffd23f;background:#3a3208;color:#ffd23f}
+.mvq .qi{border:1px solid #ffd23f;border-radius:5px;padding:.1rem .4rem;margin-top:.15rem;background:#0b1d33;min-height:1.2rem}
+.mvq .qf{margin-top:.2rem;white-space:pre-wrap;font-size:.74rem}.mvq .qf.good{color:#3dff9a}.mvq .qf.bad{color:#ff7a85}.mvq .qf.warn{color:#ffd23f}
+.mvq .qb{height:.3rem;background:#1a2a3d;border-radius:2px;margin-top:.2rem;overflow:hidden}.mvq .qb i{display:block;height:100%;background:#ffd23f}
+.mvb{background:#12304d;color:#e8f1ff;border:1px solid #2a6a96;border-radius:5px;font:700 .72rem Consolas,monospace;padding:.05rem .4rem;cursor:pointer;flex:none}.mvb.on{background:#ffd23f;color:#111}
 .mvo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-line;font:800 1.3rem Consolas,monospace;color:var(--text);background:rgba(3,8,18,.55);text-shadow:0 0 12px #000;padding:1rem}
 .mvo.hide{display:none}
 .mvf{padding:.25rem .6rem;font:600 .82rem Consolas,monospace;display:flex;flex-wrap:wrap;gap:.1rem 1rem;background:#0b1d33;border-top:1px solid var(--line);min-height:2.1rem}
@@ -362,8 +382,8 @@ body.touch .btn.small{min-height:2.4rem;padding:.4rem .8rem}
   <div class="card col mleft">
     <div class="mhead">
     <div class="mlogo" aria-hidden="true">💎</div>
-    <h1 class="title">TREASURE HUNTER 3D</h1><div class="subtitle">MATH UNDER PRESSURE</div>
-    <p class="mtag">Jelajahi kuil kuno, <b>hitung cepat</b> soal + − × ÷, dan buka semua peti harta sebelum waktu habis!</p>
+    <h1 class="title">TREAHUNT</h1>
+    <p class="mtag">Jelajahi kuil kuno, <b>jawab cepat</b> teka-teki, dan buka semua peti harta sebelum waktu habis!</p>
     </div>
     <div class="mbtns">
     <button class="btn primary" id="mNew" data-autofocus>MULAI SOLO</button>
@@ -372,7 +392,7 @@ body.touch .btn.small{min-height:2.4rem;padding:.4rem .8rem}
     <button class="btn" id="mLevels">PILIH LEVEL</button>
     <div class="mrow2"><button class="btn" id="mSet">PENGATURAN</button><button class="btn" id="mGuide">PANDUAN</button></div>
     <div class="mrow2"><button class="btn" id="mFs">⛶ LAYAR PENUH</button><button class="btn" id="mCred">KREDIT</button></div>
-    <div class="mchips"><span>🗺 5 level</span><span>➕➖✖️➗ Operasi campuran</span><span>⏱ Berpacu waktu</span><span>🏆 Peringkat S–D</span></div>
+    <div class="mchips"><span>🗺 5 level</span><span>🧩 Teka-teki</span><span>⏱ Berpacu waktu</span><span>🏆 Peringkat S–D</span></div>
     <p class="dim mnote"><span class="mnoteTxt">Mendukung keyboard + mouse dan layar sentuh (Android). Ketuk LAYAR PENUH lalu putar ke landscape.</span><span id="storeWarn"></span></p>
     </div>
   </div>
@@ -410,7 +430,7 @@ body.touch .btn.small{min-height:2.4rem;padding:.4rem .8rem}
      </svg></div>
     </div>
     <div class="dbar"><i></i></div>
-    <div class="dtabs" role="tablist"><button class="dtab" role="tab">1 · Jelajahi</button><button class="dtab" role="tab">2 · Hitung</button><button class="dtab" role="tab">3 · Raih Harta</button></div>
+    <div class="dtabs" role="tablist"><button class="dtab" role="tab">1 · Jelajahi</button><button class="dtab" role="tab">2 · Jawab</button><button class="dtab" role="tab">3 · Raih Harta</button></div>
     <div class="dcap" aria-live="off"></div>
     <div class="dkeys"><span><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> gerak</span><span><span class="kbd">Shift</span> lari</span><span><span class="kbd">E</span> interaksi</span><span><span class="kbd">Tab</span> peta</span></div>
   </div>
@@ -419,7 +439,7 @@ body.touch .btn.small{min-height:2.4rem;padding:.4rem .8rem}
 <script>
 (function(){
 const menu=document.getElementById('menu'),st=[...menu.querySelectorAll('.dstage')],tabs=[...menu.querySelectorAll('.dtab')],bar=menu.querySelector('.dbar i'),cap=menu.querySelector('.dcap');
-const CAP=['Jelajahi labirin kuil dengan <b>WASD</b>, ambil <b>kartu akses</b> untuk membuka pintu, lalu dekati peti dan tekan <b>E</b>.','Setiap peti dikunci <b>soal hitung bertahap</b>. Jawab benar sebelum timer habis; salah berarti soal diganti dan waktu berkurang.','Semua tahap benar? Peti terbuka! Skor ditentukan <b>kecepatan</b>: makin banyak sisa waktu saat level selesai, makin tinggi skornya.'];
+const CAP=['Jelajahi labirin kuil dengan <b>WASD</b>, ambil <b>kartu akses</b> untuk membuka pintu, lalu dekati peti dan tekan <b>E</b>.','Setiap peti dikunci <b>teka-teki bertahap</b>. Jawab benar sebelum timer habis; salah berarti soal diganti dan waktu berkurang.','Semua tahap benar? Peti terbuka! Skor ditentukan <b>kecepatan</b>: makin banyak sisa waktu saat level selesai, makin tinggi skornya.'];
 const DUR=[4200,5600,4200],reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 let cur=-1,timer=null,ty=null;
 function getQ(){try{return MathEngine.gens.arith(2+Math.floor(Math.random()*3));}catch(e){return{text:'(12 + 8) \u00d7 3 \u2212 14 = ?',options:['44','46','48','56'],answer:1};}}
@@ -474,7 +494,7 @@ show(0);
   </table>
   <h3>Aturan misi</h3>
   <ul>
-  <li>Temukan dan buka semua peti harta karun sebelum timer misi habis. Setiap peti dikunci soal matematika bertahap.</li>
+  <li>Temukan dan buka semua peti harta karun sebelum timer misi habis. Setiap peti dikunci teka-teki bertahap.</li>
   <li>Skor murni berdasarkan kecepatan: skor = 1000 + 9000 × (sisa waktu ÷ batas waktu level). Siapa yang menyelesaikan level paling cepat mendapat skor tertinggi. Setiap level bernilai maksimum sama (10.000) dan soal tiap level identik untuk semua pemain, jadi adil.</li>
   <li>Pintu berwarna butuh Kartu Akses (A kuning, B biru, C pink). Selesaikan terminal bertanda huruf kartu itu untuk mendapatkan kartunya.</li>
   <li>Timer peti hanya berjalan saat panel soal terbuka. Jawaban salah: soal diganti dan waktu −5 detik. Jika timer habis, jebakan aktif: waktu misi −30 detik dan peti mengunci ulang.</li>
@@ -489,7 +509,7 @@ show(0);
 </div></div>
 
 <div id="credits" class="screen"><div class="card"><h2>KREDIT</h2>
-  <p><b>TREASURE HUNTER 3D: Math Under Pressure</b><br>Game edukasi matematika top-down 3D: berburu harta karun.</p>
+  <p><b>TREAHUNT</b><br>Game top-down: berburu harta karun.</p>
   <p>Dibangun dengan HTML, CSS, JavaScript, dan Three.js (r128, dimuat dari CDN cdnjs). Seluruh objek 3D, suara, dan soal dibuat secara prosedural lewat kode.</p>
   <p class="dim">Pengembang: (isi nama Anda di sini)</p>
   <div class="row"><button class="btn" data-back>KEMBALI</button></div>
@@ -593,13 +613,13 @@ const THEMES={
 1:{n:'KUIL RIMBA',bg:0x07140c,hemi:[0x9be8a0,0x0b2412],dir:0xfff2c0,pl:0xaaff88,floor:0x6f9a62,pat:'stone',wall:0x3f6a3a,strip:0x7fd44a,cap:0x1c3a18,cab:[0x4caf50,0x8bc34a,0x2e5a22],prop:'tree',chest:'Peti Zamrud',wood:0x6b4423,s1:'RIMBA',s2:'KUIL',
  story:'Kuil kuno tertutup hutan lebat menyimpan peti zamrud. Pelajari kontrol, ambil kartu dari terminal, lalu buka peti pertama Anda.',tips:['Gerak dengan WASD, lari dengan Shift, interaksi dengan E.','Terminal di ruang tengah memberi Kartu Akses A untuk pintu kuning.','Dekati peti bercahaya lalu tekan E. Selesaikan 3 tahap soal sebelum timer peti habis.']},
 2:{n:'MAKAM GURUN',bg:0x2a1a08,hemi:[0xffd9a0,0x4a2c10],dir:0xffe0a8,pl:0xffc266,floor:0xd8b878,pat:'sand',wall:0xb88a4a,strip:0xff9f1c,cap:0x6b4a22,cab:[0xe0a030,0x8a5a20,0xc0392b],prop:'pillar',chest:'Peti Emas',wood:0x8a5a28,s1:'GURUN',s2:'MAKAM',
- story:'Labirin makam di bawah pasir gurun menyimpan dua peti emas. Dua terminal berbeda memberi Kartu A dan B.',tips:['Tab membuka peta; area yang dijelajahi tercatat.','Terminal di ruang awal memberi Kartu A, terminal di Gudang A memberi Kartu B.','Soal berupa operasi campuran: kurung dulu, lalu \u00d7 dan \u00f7, terakhir + dan \u2212.']},
+ story:'Labirin makam di bawah pasir gurun menyimpan dua peti emas. Dua terminal berbeda memberi Kartu A dan B.',tips:['Tab membuka peta; area yang dijelajahi tercatat.','Terminal di ruang awal memberi Kartu A, terminal di Gudang A memberi Kartu B.','Jawab teka-teki dengan teliti sebelum waktu peti habis.']},
 3:{n:'GUA KRISTAL ES',bg:0x061826,hemi:[0xaee6ff,0x0a2a44],dir:0xdff6ff,pl:0x7fe8ff,floor:0x9fd8ee,pat:'ice',wall:0x4a88b8,strip:0xbff3ff,cap:0x1d4468,cab:[0x9be8ff,0xffffff,0x4aa8d8],prop:'crystal',chest:'Peti Kristal',wood:0x3a6a9a,s1:'ES',s2:'GUA',
- story:'Gua es berkilau menyembunyikan tiga peti kristal. Tiga terminal hitung menerbitkan Kartu A, B, dan C.',tips:['Urutan operasi: kurung, \u00d7 dan \u00f7, lalu + dan \u2212.','Kartu A dan B ada di laboratorium utama; Kartu C di Ruang Uji (barat laut).','Kartu C membuka jalur arsip menuju ruang peti.']},
+ story:'Gua es berkilau menyembunyikan tiga peti kristal. Tiga terminal menerbitkan Kartu A, B, dan C.',tips:['Baca teka-teki dua kali sebelum menjawab.','Kartu A dan B ada di laboratorium utama; Kartu C di Ruang Uji (barat laut).','Kartu C membuka jalur arsip menuju ruang peti.']},
 4:{n:'KUIL LAVA',bg:0x1a0606,hemi:[0xff9a6a,0x2a0808],dir:0xffb080,pl:0xff7a3a,floor:0x4a3030,pat:'lava',wall:0x5a2a22,strip:0xff5a1a,cap:0x1a0a08,cab:[0xff6a1a,0xffc23a,0x2a1010],prop:'lava',chest:'Peti Api',wood:0x3a1a14,s1:'API',s2:'LAVA',
- story:'Kuil di dalam gunung berapi menyimpan empat peti api. Soal operasi campuran makin panjang dan waktu sangat ketat.',tips:['Kartu A ada di terminal ruang awal, Kartu B di gudang, Kartu C di ruang kontrol timur.','Tentukan prioritas: mana peti terdekat, mana yang butuh kartu.','Gunakan tombol Kembali jika perlu mencari petunjuk dulu.']},
+ story:'Kuil di dalam gunung berapi menyimpan empat peti api. Teka-teki makin sulit dan waktu sangat ketat.',tips:['Kartu A ada di terminal ruang awal, Kartu B di gudang, Kartu C di ruang kontrol timur.','Tentukan prioritas: mana peti terdekat, mana yang butuh kartu.','Gunakan tombol Kembali jika perlu mencari petunjuk dulu.']},
 5:{n:'ISTANA BINTANG',bg:0x100622,hemi:[0xd0b0ff,0x1a0a3a],dir:0xf0e0ff,pl:0xffd23f,floor:0xb8a6e0,pat:'marble',wall:0x6a4aa8,strip:0xffd23f,cap:0x2a1250,cab:[0xffd23f,0xd070ff,0xffffff],prop:'gold',chest:'Peti Raja',wood:0x5a2a7a,s1:'RAJA',s2:'ISTANA',
- story:'Istana bintang menyimpan harta terbesar. Peti Raja dijaga pintu merah dan menggabungkan operasi campuran terpanjang.',tips:['Kartu A dari terminal di Hub (Aula Agung), Kartu B dari terminal Arsip Data.','Pintu merah terbuka otomatis setelah tiga peti lain terbuka.','Peti Raja punya empat tahap dan bernilai dua kali lipat.']}
+ story:'Istana bintang menyimpan harta terbesar. Peti Raja dijaga pintu merah dan menyajikan teka-teki tersulit.',tips:['Kartu A dari terminal di Hub (Aula Agung), Kartu B dari terminal Arsip Data.','Pintu merah terbuka otomatis setelah tiga peti lain terbuka.','Peti Raja punya empat tahap dan bernilai dua kali lipat.']}
 };
 function makeProp(TH,rng){
   const g=new THREE.Group(),M=(c,e)=>TM({color:c,roughness:.7,emissive:e||0,emissiveIntensity:.6});
@@ -617,7 +637,7 @@ const THEME_COL={start:0x4a6f9c,corr:0x3b4c63,storage:0x5a5a6e,ind:0x6b5a42,lab:
 const THEME_MINI={start:'#1f3d5c',corr:'#182b40',storage:'#2d3347',ind:'#38312a',lab:'#18404f',ctrl:'#22305a',device:'#40262f',gen:'#2f3d25',sec:'#2e2848'};
 const DOOR_COL={plain:0x7a8da3,card:0xd9a400,term:0x1fb6d4,final:0xd63a44};
 const DOOR_MINI={plain:'#9fb3c8',card:'#ffd23f',term:'#35e0ff',final:'#ff4d5e'};
-const CAT_NAME={arith:'OPERASI HITUNG CAMPURAN (+ \u2212 \u00d7 \u00f7)'};
+const CAT_NAME={arith:'TEKA-TEKI'};
 
 /* ===================== 2. UTILITAS ===================== */
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -638,26 +658,26 @@ const LEVELS=[
  rects:[[1,1,6,6,'start','Ruang Awal'],[7,3,3,1,'corr','Koridor'],[10,1,6,6,'storage','Ruang Penyimpanan'],[16,3,2,1,'corr','Koridor'],[18,1,3,6,'device','Ruang Perangkat']],
  start:[2,5],doors:[{x:8,y:3,kind:'plain'},{x:16,y:3,kind:'card'}],cards:[[12,5]],
  terminals:[{id:'t1',x:13,y:2,cat:'arith',diff:1,link:null}],
- notes:[{x:3,y:2,text:'Catatan teknisi: perkalian dan pembagian dikerjakan sebelum penjumlahan dan pengurangan. Kurung selalu didahulukan.'}],
+ notes:[{x:3,y:2,text:'Catatan teknisi: kerjakan teka-teki satu langkah pada satu waktu.'}],
  devices:[{x:19,y:3,name:'AEGIS-01',time:90,stages:[['arith',1],['arith',1],['arith',2]]}]},
 {id:2,name:'INDUSTRIAL MAZE',time:300,failLimit:3,w:30,h:22,
  story:'Sektor industri penuh lorong bercabang. Dua perangkat aktif di ujung-ujung labirin. Temukan kartu akses dan terminal untuk membuka jalan.',
- tips:['Tab membuka peta; area yang dijelajahi tercatat di minimap.','Kartu akses ada di salah satu gudang. Terminal membuka pintu biru.','Soal berupa operasi campuran: kurung dulu, lalu \u00d7 dan \u00f7, terakhir + dan \u2212.'],
+ tips:['Tab membuka peta; area yang dijelajahi tercatat di minimap.','Kartu akses ada di salah satu gudang. Terminal membuka pintu biru.','Jawab teka-teki dengan teliti sebelum waktu peti habis.'],
  rects:[[1,1,5,5,'start','Ruang Awal'],[6,3,10,1,'corr','Koridor Utama'],[16,1,6,5,'storage','Gudang A'],[22,3,4,1,'corr','Koridor Timur'],[26,1,3,8,'ind','Ruang Mesin'],[10,4,1,10,'corr','Lorong Selatan'],[7,14,8,6,'device','Ruang Perangkat B'],[3,6,1,8,'corr','Lorong Barat'],[1,14,4,5,'storage','Gudang Barat'],[27,9,1,6,'corr','Lorong Timur'],[20,15,8,5,'device','Ruang Perangkat D']],
  start:[2,3],doors:[{x:6,y:3,kind:'plain'},{x:10,y:13,kind:'card'},{x:27,y:11,kind:'term',link:'t1'}],cards:[[20,4]],
  terminals:[{id:'t1',x:17,y:2,cat:'arith',diff:1,link:'t1'}],
- notes:[{x:2,y:16,text:'Memo: jika ada \u00d7 dan \u00f7 berurutan, kerjakan dari kiri ke kanan.'},{x:27,y:5,text:'Peringatan: pintu timur butuh Kartu B dari terminal Gudang A.'}],
+ notes:[{x:2,y:16,text:'Memo: periksa setiap ruangan, kartu bisa tersembunyi di sudut.'},{x:27,y:5,text:'Peringatan: pintu timur butuh Kartu B dari terminal Gudang A.'}],
  devices:[{x:10,y:17,name:'AEGIS-02A',time:95,stages:[['arith',1],['arith',2],['arith',2]]},{x:23,y:17,name:'AEGIS-02B',time:105,stages:[['arith',2],['arith',3],['arith',2]]}]},
 {id:3,name:'RESEARCH LABORATORY',time:360,failLimit:2,w:32,h:24,
- story:'Laboratorium riset menyimpan tiga perangkat. Terminal akses dikunci dengan soal hitung campuran. Ada jalur alternatif lewat ruang arsip.',
- tips:['Urutan operasi: kurung, \u00d7 dan \u00f7, lalu + dan \u2212.','Dua terminal di laboratorium utama membuka pintu utara dan timur.','Ruang arsip (pintu kartu) menyambung ke generator sebagai jalur alternatif.'],
+ story:'Laboratorium riset menyimpan tiga perangkat. Terminal akses dikunci dengan teka-teki. Ada jalur alternatif lewat ruang arsip.',
+ tips:['Baca teka-teki dua kali sebelum menjawab.','Dua terminal di laboratorium utama membuka pintu utara dan timur.','Ruang arsip (pintu kartu) menyambung ke generator sebagai jalur alternatif.'],
  rects:[[1,10,5,5,'start','Ruang Awal'],[6,12,4,1,'corr','Koridor'],[10,8,8,9,'lab','Laboratorium Utama'],[13,4,1,4,'corr','Lorong Utara'],[9,1,10,3,'lab','Lab Riset'],[13,17,1,3,'corr','Lorong Selatan'],[9,20,10,3,'storage','Ruang Arsip'],[18,12,4,1,'corr','Koridor Timur'],[22,8,8,9,'gen','Ruang Generator'],[19,21,9,1,'corr','Koridor Servis'],[27,17,1,4,'corr','Lorong Servis'],[3,5,1,5,'corr','Lorong Barat'],[1,1,6,4,'lab','Ruang Uji']],
  start:[2,12],doors:[{x:6,y:12,kind:'plain'},{x:13,y:5,kind:'term',link:'t1'},{x:13,y:18,kind:'card'},{x:19,y:12,kind:'term',link:'t2'}],cards:[[4,2]],
  terminals:[{id:'t1',x:11,y:10,cat:'arith',diff:2,link:'t1'},{id:'t2',x:16,y:14,cat:'arith',diff:2,link:'t2'},{id:'t3',x:5,y:3,cat:'arith',diff:1,link:null}],
- notes:[{x:17,y:2,text:'Catatan riset: kerjakan kurung dulu, lalu \u00d7 dan \u00f7, terakhir + dan \u2212.'},{x:28,y:9,text:'Catatan: jalur servis dari ruang arsip menuju sini masih terbuka.'}],
+ notes:[{x:17,y:2,text:'Catatan riset: jangan terburu-buru, baca soal dengan teliti.'},{x:28,y:9,text:'Catatan: jalur servis dari ruang arsip menuju sini masih terbuka.'}],
  devices:[{x:16,y:2,name:'AEGIS-03A',time:100,stages:[['arith',2],['arith',2],['arith',3]]},{x:15,y:21,name:'AEGIS-03B',time:110,stages:[['arith',3],['arith',3],['arith',3]]},{x:25,y:12,name:'AEGIS-03C',time:120,stages:[['arith',4],['arith',4],['arith',3]]}]},
 {id:4,name:'EMERGENCY BUNKER',time:420,failLimit:2,w:36,h:26,
- story:'Bunker darurat dengan empat perangkat dan waktu ketat. Soal operasi campuran makin panjang. Tentukan prioritas: mana yang terdekat, mana yang butuh kartu.',
+ story:'Bunker darurat dengan empat perangkat dan waktu ketat. Teka-teki makin sulit. Tentukan prioritas: mana yang terdekat, mana yang butuh kartu.',
  tips:['Pelajari pola kisi: koridor utama membentang dengan ruangan di atas dan di bawah.','Kartu akses ada di laboratorium. Terminal di gudang membuka ruang generator.','Setiap perangkat punya timer sendiri; gunakan tombol Kembali jika perlu mencari petunjuk dulu.'],
  rects:[[1,11,4,4,'start','Ruang Awal'],[5,12,25,1,'corr','Koridor Utama'],[30,8,5,9,'ctrl','Ruang Kontrol'],[6,3,6,6,'sec','Ruang Keamanan'],[8,9,1,3,'corr','Lorong'],[14,3,6,6,'lab','Laboratorium'],[16,9,1,3,'corr','Lorong'],[22,3,6,6,'gen','Ruang Generator'],[24,9,1,3,'corr','Lorong'],[6,16,6,7,'storage','Gudang'],[8,13,1,3,'corr','Lorong'],[14,16,6,7,'device','Ruang Perangkat'],[16,13,1,3,'corr','Lorong'],[22,16,6,7,'ind','Ruang Mesin'],[24,13,1,3,'corr','Lorong']],
  start:[2,12],doors:[{x:5,y:12,kind:'plain'},{x:8,y:10,kind:'card'},{x:24,y:10,kind:'term',link:'t1'},{x:24,y:14,kind:'card'},{x:29,y:12,kind:'plain'}],cards:[[17,4]],
@@ -665,8 +685,8 @@ const LEVELS=[
  notes:[{x:25,y:4,text:'Pesan keamanan: hasil pembagian di soal selalu bilangan bulat, jadi periksa lagi jika hasilmu berkoma.'},{x:18,y:18,text:'Ingat: perkalian dan pembagian sederajat, kerjakan dari kiri ke kanan.'}],
  devices:[{x:8,y:5,name:'AEGIS-04A',time:90,stages:[['arith',2],['arith',3],['arith',3]]},{x:24,y:5,name:'AEGIS-04B',time:100,stages:[['arith',3],['arith',3],['arith',3]]},{x:16,y:19,name:'AEGIS-04C',time:100,stages:[['arith',3],['arith',4],['arith',4]]},{x:24,y:19,name:'AEGIS-04D',time:110,stages:[['arith',4],['arith',4],['arith',4]]}]},
 {id:5,name:'AEGIS COMMAND CORE',time:480,failLimit:2,w:40,h:28,
- story:'Pusat kendali AEGIS. Empat perangkat terakhir, termasuk inti komando yang dikunci pintu darurat. Puzzle final menggabungkan semua kategori matematika.',
- tips:['Pintu darurat merah terbuka otomatis setelah tiga perangkat lain nonaktif.','Kartu akses ada di Lab Analisis (barat laut). Terminal Arsip Data membuka Ruang Daya.','Inti Komando memiliki empat tahap operasi campuran (+, −, ×, ÷) tingkat tertinggi.'],
+ story:'Pusat kendali AEGIS. Empat perangkat terakhir, termasuk inti komando yang dikunci pintu darurat. Puzzle final adalah yang tersulit.',
+ tips:['Pintu darurat merah terbuka otomatis setelah tiga perangkat lain nonaktif.','Kartu akses ada di Lab Analisis (barat laut). Terminal Arsip Data membuka Ruang Daya.','Inti Komando memiliki empat tahap teka-teki tingkat tertinggi.'],
  rects:[[1,12,4,4,'start','Ruang Awal'],[5,13,11,1,'corr','Koridor Barat'],[16,9,9,10,'ctrl','Hub Komando'],[20,6,1,3,'corr','Lorong Utara'],[15,1,11,5,'sec','Ruang Server'],[20,19,1,3,'corr','Lorong Selatan'],[15,22,11,5,'gen','Ruang Daya'],[25,13,5,1,'corr','Koridor Timur'],[30,9,9,10,'device','Inti Komando'],[2,8,1,4,'corr','Lorong NW'],[1,2,8,6,'lab','Lab Analisis'],[2,16,1,4,'corr','Lorong SW'],[1,20,8,6,'storage','Arsip Data']],
  start:[3,14],doors:[{x:6,y:13,kind:'plain'},{x:2,y:10,kind:'plain'},{x:2,y:18,kind:'plain'},{x:20,y:7,kind:'card'},{x:20,y:20,kind:'term',link:'t1'},{x:27,y:13,kind:'final'}],cards:[[7,3]],
  terminals:[{id:'t1',x:4,y:22,cat:'arith',diff:4,link:'t1'},{id:'t2',x:18,y:10,cat:'arith',diff:4,link:null}],
@@ -694,7 +714,7 @@ const LEVELS=[
   });
 })();
 
-/* ===================== 4. MESIN SOAL MATEMATIKA ===================== */
+/* ===================== 4. MESIN SOAL ===================== */
 const mkNum=(text,answer,h1,h2,explain)=>mkMC(text,answer,h1,h2,explain); /* semua soal kini pilihan ganda A-D */
 function mkMC(text,ans,h1,h2,explain){
   const set=new Set([ans]);
@@ -1325,7 +1345,7 @@ function tryInteract(){
     const d=it.ref;
     if(d.kind==='plain')openDoor(d,'Pintu terbuka.');
     else if(d.kind==='card'){if(r.cards.has(d.link))openDoor(d,'Akses diterima.');else{Sfx.bad();toast('Butuh Kartu Akses '+d.link+'. Dapatkan dari terminal bertanda '+d.link+'.','warn',3500);}}
-    else if(d.kind==='term'){Sfx.bad();toast('Selesaikan terminal matematika terlebih dahulu.','warn');}
+    else if(d.kind==='term'){Sfx.bad();toast('Selesaikan terminal terlebih dahulu.','warn');}
     else{if(finalReady())openDoor(d,'Pintu darurat terbuka.');else{Sfx.bad();toast('Area ini akan terbuka setelah seluruh objektif selesai.','warn');}}
   }
   else if(it.kind==='term'){Sfx.interact();beginInteract(null,it.ref);}
@@ -1540,9 +1560,8 @@ function updatePanelTimers(){
 }
 
 /* ===================== 13. HUD & MINIMAP ===================== */
-function refreshObjectives(){
-  const ul=$('hObj');ul.textContent='';const r=G.run;if(!r||!world)return;
-  const add=(txt,cls)=>{const li=document.createElement('li');li.textContent=txt;if(cls)li.className=cls;ul.appendChild(li);};
+function objLines(hasCard){
+  const out=[],add=(txt,cls)=>out.push([txt,cls||'']);
   const total=world.devs.length,done=world.devs.filter(d=>d.status==='Disabled').length;
   add((done>=total?'\u2714':'\u25fb')+` Kumpulkan semua harta karun (${done}/${total})`,done>=total?'ok':'');
   world.devs.forEach(d=>{
@@ -1550,8 +1569,12 @@ function refreshObjectives(){
     const lbl={'Discovered':'ditemukan','Interacting':'aktif','Puzzle Active':'aktif','Disabled':'TERBUKA','Failed':'JEBAKAN / mengunci ulang'}[d.status];
     add(`   ${d.status==='Disabled'?'\u2714':d.status==='Failed'?'\u2716':'\u25b8'} ${d.def.name}: ${lbl}${d.status==='Disabled'?'':` (tahap ${d.stage}/${d.questions.length})`}`,d.status==='Disabled'?'ok':d.status==='Failed'?'bad':'');
   });
-  world.terms.filter(t=>t.def.link).forEach(t=>{const h=r.cards.has(t.def.link);add((h?'\u2714':'\u25fb')+' Kartu Akses '+t.def.link+(h?' dimiliki':' (selesaikan terminal)'),h?'ok':'');});
-
+  world.terms.filter(t=>t.def.link).forEach(t=>{const h=hasCard(t.def.link);add((h?'\u2714':'\u25fb')+' Kartu Akses '+t.def.link+(h?' dimiliki':' (selesaikan terminal)'),h?'ok':'');});
+  return out;
+}
+function refreshObjectives(){
+  const ul=$('hObj');ul.textContent='';const r=G.run;if(!r||!world)return;
+  objLines(k=>r.cards.has(k)).forEach(([txt,cls])=>{const li=document.createElement('li');li.textContent=txt;if(cls)li.className=cls;ul.appendChild(li);});
   G.objDirty=false;
 }
 function updateHud(){
@@ -1566,13 +1589,13 @@ function updateHud(){
   if(G.objDirty)refreshObjectives();
   drawMap($('mini'),false);
 }
-function drawMap(cv,full){
+function drawMap(cv,full,ex){
   if(!world)return;
   const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,TS=CFG.TS,W=world.W,H=world.H;ctx.clearRect(0,0,w,h);
   let cs,ox,oy,x0,y0,x1,y1;
   if(full){cs=Math.min(w/W,h/H);ox=(w-cs*W)/2;oy=(h-cs*H)/2;x0=0;y0=0;x1=W-1;y1=H-1;}
   else{const vw=24,vh=16;cs=w/vw;const cx=player.x/TS,cy=player.z/TS;ox=w/2-cx*cs;oy=h/2-cy*cs;x0=Math.max(0,Math.floor(cx-vw/2-1));x1=Math.min(W-1,Math.ceil(cx+vw/2+1));y0=Math.max(0,Math.floor(cy-vh/2-1));y1=Math.min(H-1,Math.ceil(cy+vh/2+1));}
-  const E=world.exp;
+  const E=ex||world.exp,sn=o=>ex?E[o.ty][o.tx]===1:o.seen;
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
     const px=ox+x*cs,py=oy+y*cs;
     if(E[y][x]){ctx.fillStyle=THEME_MINI[world.theme[y][x]]||'#16263a';ctx.fillRect(px,py,cs+.5,cs+.5);}
@@ -1580,9 +1603,9 @@ function drawMap(cv,full){
   }
   world.doors.forEach(d=>{if(!E[d.y][d.x])return;ctx.fillStyle=d.open?'#2a4a3a':(d.kind==='card'?CARDMINI[d.link]:DOOR_MINI[d.kind]);ctx.fillRect(ox+d.x*cs+cs*.1,oy+d.y*cs+cs*.1,cs*.8,cs*.8);});
   const dot=(tx,ty,color,sc)=>{ctx.fillStyle=color;ctx.beginPath();ctx.arc(ox+(tx+.5)*cs,oy+(ty+.5)*cs,cs*sc,0,6.3);ctx.fill();};
-  world.cards.forEach(c=>{if(c.seen&&!c.taken)dot(c.tx,c.ty,'#ffd23f',.35);});
-  world.notes.forEach(n=>{if(n.seen&&!n.read)dot(n.tx,n.ty,'#f3ead2',.25);});
-  world.terms.forEach(t=>{if(t.seen)dot(t.tx,t.ty,t.solved?'#3dff9a':'#35e0ff',.4);});
+  world.cards.forEach(c=>{if(sn(c)&&!c.taken)dot(c.tx,c.ty,'#ffd23f',.35);});
+  world.notes.forEach(n=>{if(sn(n)&&!n.read)dot(n.tx,n.ty,'#f3ead2',.25);});
+  world.terms.forEach(t=>{if(sn(t))dot(t.tx,t.ty,t.solved?'#3dff9a':'#35e0ff',.4);});
   world.devs.forEach(d=>{if(d.status==='Undiscovered')return;const c=d.status==='Disabled'?'#3dff9a':d.status==='Failed'?'#ffb347':'#ff4d5e';dot(d.tx,d.ty,c,.5);
     if(d.status!=='Disabled'){ctx.strokeStyle='#ffd23f';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(ox+(d.tx+.5)*cs,oy+(d.ty+.5)*cs,cs*(.8+.15*Math.sin(G.t*4)),0,6.3);ctx.stroke();}});
   const ppx=ox+player.x/TS*cs,ppy=oy+player.z/TS*cs;
@@ -1599,6 +1622,7 @@ const keys=new Set();
 function onEscape(){
   if($('confirm').classList.contains('show')){$('confirm').classList.remove('show');return;}
   if(['settings','guide','credits','levels','netjoin'].includes(UI.cur)){UI.back();return;}
+  if(Net.mvZoom){Net.mvSetZoom(0);return;}
   if(G.mapOpen){toggleMap();return;}
   if($('notebox').style.display==='block'){$('notebox').style.display='none';return;}
   switch(G.state){
@@ -1953,11 +1977,18 @@ const Net={
   const grid=$('mvGrid');this.tiles=[];
   for(let s=2;s<=5;s++){
    const el=document.createElement('div');el.className='mvt';
-   el.innerHTML='<div class="mvh"><b>PEMAIN '+(s-1)+'</b><span class="mvn">—</span><span class="mvfps"></span><span class="mvs dim"></span></div><div class="mvw"><canvas width="'+this.FW+'" height="'+this.FH+'"></canvas><video muted playsinline autoplay></video><div class="mvo">Slot kosong</div></div><div class="mvf"><span class="f1"></span><span class="f2"></span><span class="f3"></span><span class="f4"></span></div>';
+   el.innerHTML='<div class="mvh"><b>PEMAIN '+(s-1)+'</b><span class="mvn">—</span><span class="mvfps"></span><span class="mvs dim"></span><button class="mvb" data-a="map">PETA</button><button class="mvb" data-a="obj">OBJEKTIF</button><button class="mvb" data-a="zoom">ZOOM</button></div><div class="mvw"><canvas width="'+this.FW+'" height="'+this.FH+'"></canvas><video muted playsinline autoplay></video><canvas class="mvmap" width="220" height="150"></canvas><div class="mvhud"></div><div class="mvq"></div><div class="mvo">Slot kosong</div></div><div class="mvf"><span class="f1"></span><span class="f2"></span><span class="f3"></span><span class="f4"></span></div>';
    grid.appendChild(el);
    const cv=el.querySelector('canvas');
-   this.tiles.push({el,cv,ctx:cv.getContext('2d'),ov:el.querySelector('.mvo'),vid:el.querySelector('video'),fps:el.querySelector('.mvfps'),lastVf:0,nm:el.querySelector('.mvn'),st:el.querySelector('.mvs'),f1:el.querySelector('.f1'),f2:el.querySelector('.f2'),f3:el.querySelector('.f3'),f4:el.querySelector('.f4'),got:false});
+   this.tiles.push({el,cv,ctx:cv.getContext('2d'),ov:el.querySelector('.mvo'),vid:el.querySelector('video'),fps:el.querySelector('.mvfps'),map:el.querySelector('.mvmap'),hud:el.querySelector('.mvhud'),qv:el.querySelector('.mvq'),bMap:el.querySelector('[data-a=map]'),bObj:el.querySelector('[data-a=obj]'),bZoom:el.querySelector('[data-a=zoom]'),full:false,showObj:false,uiT:0,qKey:'',lastVf:0,nm:el.querySelector('.mvn'),st:el.querySelector('.mvs'),f1:el.querySelector('.f1'),f2:el.querySelector('.f2'),f3:el.querySelector('.f3'),f4:el.querySelector('.f4'),got:false});
   }
+  this.tiles.forEach(t=>{
+   t.bMap.onclick=()=>{t.full=!t.full;t.bMap.classList.toggle('on',t.full);t.uiT=0;};
+   const zi=this.tiles.indexOf(t)+2;
+   t.bZoom.onclick=()=>this.mvSetZoom(this.mvZoom===zi?0:zi);
+   t.el.querySelector('.mvw').ondblclick=e=>{if(e.target.closest('.mvmap.full,.mvq'))return;this.mvSetZoom(this.mvZoom===zi?0:zi);};
+   t.bObj.onclick=()=>{t.showObj=!t.showObj;t.bObj.classList.toggle('on',t.showObj);t.uiT=0;};
+  });
   this.tiles.forEach(t=>{
    t.vid.onplaying=()=>{t.vid.style.display='block';t.cv.style.display='none';if(!t.got){t.got=true;this.updateTiles();}};
    if(t.vid.requestVideoFrameCallback){let n=0,t0=performance.now();const cb=()=>{n++;const now=performance.now();t.lastVf=now;if(now-t0>=1000){t.fps.textContent=Math.round(n*1000/(now-t0))+' FPS';n=0;t0=now;}t.vid.requestVideoFrameCallback(cb);};t.vid.requestVideoFrameCallback(cb);}
@@ -2220,12 +2251,18 @@ const Net={
   this.lastDraw=now;
   try{
    dc.send(JSON.stringify({p:[+player.x.toFixed(2),+player.z.toFixed(2),+player.yaw.toFixed(3),(player.moving?1:0)|(player.sprinting?2:0)|(player.flash?4:0)]}));
-   if(now-this.snapT>500){this.snapT=now;const sn=this.snapshot();if(sn)dc.send(JSON.stringify({s:sn}));}   // status peti/pintu/kartu dikirim ulang tiap 0,5 dtk (kanal boleh kehilangan paket)
+   {const sn=this.snapshot();if(sn){const sig=JSON.stringify([sn.o,sn.c,sn.n,sn.t,sn.e,sn.k,sn.q,sn.d.map(q=>q[0]+':'+q[3]),sn.h&&[sn.h[0],sn.h[4],sn.h[5]]]);if(sig!==this.snapSig||now-this.snapT>500){this.snapSig=sig;this.snapT=now;dc.send(JSON.stringify({s:sn}));}}}   // status peti/pintu/kartu dikirim ulang tiap 0,5 dtk (kanal boleh kehilangan paket)
   }catch(e){}
  },
  snapshot(){
   const w=world;if(!w)return null;
-  return {d:w.devs.map(d=>[Math.max(0,DEVST.indexOf(d.status)),Math.round(d.timeLeft),Math.round(d.coolT||0)]),o:w.doors.map(d=>(d.open||d.opening)?1:0),c:w.cards.map(c=>c.taken?1:0),n:w.notes.map(n=>n.read?1:0),t:w.terms.map(t=>t.solved?1:0)};
+  const r=G.run,P_=(P.open&&G.state==='PUZZLE_ACTIVE'&&P.q)?{ti:$('pTitle').textContent,st:$('pStage').textContent,ca:$('pCat').textContent,tx:$('pText').textContent,
+    o:P.q.kind==='mc'?P.q.options.map(String):null,sel:P.sel,ph:P.phase,inp:P.q.kind==='mc'?'':$('pInput').value,fb:$('pFb').className.indexOf('fb ')===0?[$('pFb').textContent,$('pFb').className.slice(3)]:null,
+    hn:$('pHintBox').textContent,dt:P.dev?Math.ceil(P.dev.timeLeft):-1,dm:P.dev?P.dev.maxTime:0}:null;
+  let eb=new Uint8Array(Math.ceil(w.W*w.H/8));for(let y=0;y<w.H;y++)for(let x=0;x<w.W;x++)if(w.exp[y][x])eb[(y*w.W+x)>>3]|=1<<((y*w.W+x)&7);
+  let es='';for(let i=0;i<eb.length;i++)es+=String.fromCharCode(eb[i]);
+  return {q:P_,e:btoa(es),k:r?[...r.cards].join(''):'',h:r?[Math.round(r.time),Math.round(player.stam),player.flash?1:0,r.freeHints,r.devicesDone,r.failures,projScore(r)]:null,
+   d:w.devs.map(d=>[Math.max(0,DEVST.indexOf(d.status)),Math.round(d.timeLeft),Math.round(d.coolT||0),d.stage|0]),o:w.doors.map(d=>(d.open||d.opening)?1:0),c:w.cards.map(c=>c.taken?1:0),n:w.notes.map(n=>n.read?1:0),t:w.terms.map(t=>t.solved?1:0)};
  },
  bindDc(ch){this.dc=ch;ch.onclose=()=>{if(this.dc===ch)this.dc=null;};},
  drawWait(){},
@@ -2400,46 +2437,102 @@ const Net={
    const t=this.tiles[slot-2];if(t&&!t.got){t.got=true;this.updateTiles();}
   }else if(m.s)s.snap=m.s;
  },
- mvApply(s,c){
-  const w=world;
+ mvApply(s,c,dt){
+  const w=world;dt=dt||0;
   player.x=c.x;player.z=c.z;player.yaw=c.yaw;player.moving=!!(c.fl&1);player.walkT=c.walk;player.flash=!!(c.fl&4);
   const st=G.state;G.state='PLAYING';animatePlayer(0);G.state=st;
   camera.position.set(c.x,CFG.CAM.height,c.z+CFG.CAM.back);camera.lookAt(c.x,.4,c.z-.5);
   const sn=s.snap;if(!sn)return;
   w.devs.forEach((d,i)=>{
    const q=sn.d[i];if(!q)return;
-   d.status=DEVST[q[0]]||'Undiscovered';d.timeLeft=q[1];d.coolT=q[2];
+   d.status=DEVST[q[0]]||'Undiscovered';d.timeLeft=q[1];d.coolT=q[2];d.stage=q[3]|0;
    let col=0xff4d5e,k=Math.sin(G.t*(d.status==='Failed'?10:4))>0?1.3:.25;
    if(d.status==='Disabled'){col=0x3dff9a;k=1;}else if(d.status==='Puzzle Active'||d.status==='Interacting'){col=0xffd23f;k=1;}
    d.lampMat.color.setHex(col);d.lampMat.emissive.setHex(col);d.lampMat.emissiveIntensity=k;
-   const on=d.status==='Disabled';d.lid.rotation.x=on?-1.9:0;d.pile.visible=on;d.glow.intensity=on?.35:.7;
+   const on=d.status==='Disabled';
+   const ls=s.lid||(s.lid=[]);if(ls[i]===undefined)ls[i]=on?-1.9:0;ls[i]=lerp(ls[i],on?-1.9:0,Math.min(1,dt*5));d.lid.rotation.x=ls[i];   // tutup peti membuka halus seperti di layar pemain
+   d.pile.visible=on;d.glow.intensity=on?.35:.7+.25*Math.sin(G.t*3+d.tx);if(on)d.pile.children[9].rotation.y=G.t*2;
    if(Math.abs(d.x-c.x)+Math.abs(d.z-c.z)<26){const key=d.status+'|'+d.timeLeft+'|'+Math.ceil(d.coolT);if(d._k!==key){d._k=key;drawDevScreen(d);}}   // layar peti hanya digambar ulang bila terlihat
   });
-  w.doors.forEach((d,i)=>{const o=sn.o[i]?1:0;d.open=!!o;d.opening=false;d.openT=o;d.slab.position.y=CFG.WALL_H/2-o*(CFG.WALL_H+.1);d.lampMat.color.setHex(o?0x3dff9a:0xff4d5e);});
-  w.cards.forEach((k,i)=>{const tk=!!sn.c[i];k.taken=tk;k.mesh.visible=!tk;k.halo.visible=!tk;});
-  w.notes.forEach((n,i)=>{n.read=!!sn.n[i];});
+  w.doors.forEach((d,i)=>{
+   // animasi pintu sama persis dengan layar pemain: geser turun 0,6 dtk + lampu merah berkedip / hijau saat terbuka
+   const o=sn.o[i]?1:0,ds=s.door||(s.door=[]);
+   if(ds[i]===undefined)ds[i]=o;   // pintu yang sudah terbuka sebelum Master terhubung langsung tampil terbuka
+   ds[i]=o?Math.min(1,ds[i]+dt/.6):0;
+   d.openT=ds[i];d.open=ds[i]>=1;d.opening=o&&ds[i]<1;
+   d.slab.position.y=CFG.WALL_H/2-d.openT*(CFG.WALL_H+.1);
+   if(o)d.lampMat.color.setHex(0x3dff9a);else{const bl=Math.sin(G.t*3+d.x)>0;d.lampMat.color.setHex(bl?0xff4d5e:0x8a1f2b);}
+  });
+  w.cards.forEach((k,i)=>{const tk=!!sn.c[i];k.taken=tk;k.mesh.visible=!tk;k.halo.visible=!tk;if(!tk){k.mesh.rotation.y=G.t*1.5;k.mesh.position.y=.9+Math.sin(G.t*2)*.08;}});
+  if(sn.e&&s.eStr!==sn.e){   // peta yang sudah dijelajahi pemain (bitset)
+   try{const bin=atob(sn.e),E=[];for(let y=0;y<w.H;y++){const row=new Array(w.W).fill(0);for(let x=0;x<w.W;x++){const i=y*w.W+x;if(bin.charCodeAt(i>>3)>>(i&7)&1)row[x]=1;}E.push(row);}s.exp=E;s.eStr=sn.e;}catch(e){}
+  }
+  w.notes.forEach((n,i)=>{n.read=!!sn.n[i];if(!n.read)n.mesh.position.y=.8+Math.sin(G.t*2+1)*.06;});
   w.terms.forEach((tm,i)=>{const v=!!sn.t[i];if(tm.solved!==v){tm.solved=v;drawTermScreen(tm);}});
  },
  mvFrame(dt){
   const mv=this.mv;
   if(!mv||!mv.ready||this.role!=='master'||UI.cur!=='masterview'||!this.room||!world)return;
-  const W=this.FW,H=this.FH,cv=renderer.domElement;
+  const zm=this.mvZoom|0,W=zm?this.FW*2:this.FW,H=zm?this.FH*2:this.FH,cv=renderer.domElement;   // layar yang di-zoom dirender 2x lebih tajam (720p), layar lain dihentikan
   if(cv.width!==W||cv.height!==H){renderer.setPixelRatio(1);renderer.setSize(W,H,false);camera.aspect=W/H;camera.updateProjectionMatrix();}
   const now=performance.now(),k=1-Math.exp(-dt*18);
   this.room.players.forEach(p=>{
    if(!p||!p.part||p.result||!p.connected)return;
+   if(zm&&p.slot!==zm)return;
    const s=mv.slots[p.slot],t=this.tiles[p.slot-2];
    if(!s||!s.cur||!t)return;
+   if(t.cv.width!==W||t.cv.height!==H){t.cv.width=W;t.cv.height=H;}
    const c=s.cur,g=s.tgt;
    c.x+=(g.x-c.x)*k;c.z+=(g.z-c.z)*k;
    let dy=g.yaw-c.yaw;while(dy>Math.PI)dy-=2*Math.PI;while(dy<-Math.PI)dy+=2*Math.PI;c.yaw+=dy*k;
    c.fl=g.fl;if(c.fl&1)c.walk+=dt*(c.fl&2?14:9);
-   this.mvApply(s,c);
+   this.mvApply(s,c,dt);
    renderer.render(scene,camera);
    t.ctx.drawImage(cv,0,0,W,H);t.lastVf=now;
+   if(now-t.uiT>120){t.uiT=now;try{this.mvUi(s,t);}catch(e){console.error(e);}}
   });
   mv.fr++;
   if(now-mv.t0>=1000){const f=Math.round(mv.fr*1000/(now-mv.t0));mv.fr=0;mv.t0=now;this.tiles.forEach(t=>{t.fps.textContent=t.got?f+' FPS':'';});}
+ },
+ mvSetZoom(slot){
+  this.mvZoom=slot|0;
+  const g=$('mvGrid');g.classList.toggle('zoomed',!!slot);
+  this.tiles.forEach((t,i)=>{const z=slot===i+2;t.el.classList.toggle('zoom',z);t.bZoom.classList.toggle('on',z);t.bZoom.textContent=z?'KECILKAN':'ZOOM';t.uiT=0;});
+  if(!slot)this.tiles.forEach(t=>{if(t.cv.width!==this.FW){t.cv.width=this.FW;t.cv.height=this.FH;}});
+ },
+ mvUi(s,t){
+  const sn=s.snap;if(!sn)return;
+  // HUD: timer, stamina, senter, skor
+  const h=sn.h;
+  if(h){
+   let html='⏱ '+fmtTime(h[0])+' &nbsp;★'+h[6]+' &nbsp;💰'+h[4]+'/'+world.devs.length+' &nbsp;⚠'+h[5]+'/'+LEVELS[this.room.level-1].failLimit+'<br><span class="dim">STAMINA</span> <span class="mvbar"><i style="width:'+h[1]+'%"></i></span> &nbsp;🔦'+(h[2]?'ON':'OFF')+' &nbsp;<span class="dim">💡gratis</span> '+h[3];
+   if(t.showObj){const hs=new Set((sn.k||'').split(''));html+='<ul>'+objLines(k=>hs.has(k)).map(([x,c])=>'<li class="'+c+'">'+x.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/ /g,'&nbsp;')+'</li>').join('')+'</ul>';}
+   if(t.hudK!==html){t.hudK=html;t.hud.innerHTML=html;}
+  }
+  // peta (mini / penuh)
+  if(s.exp){
+   const cv=t.map,fw=t.full?640:220,fh=t.full?360:150;
+   if(cv.width!==fw){cv.width=fw;cv.height=fh;}
+   cv.classList.toggle('full',t.full);
+   drawMap(cv,t.full,s.exp);
+  }
+  // panel soal yang sedang dikerjakan pemain
+  const q=sn.q,key=q?JSON.stringify(q):'';
+  if(key!==t.qKey){
+   t.qKey=key;
+   if(!q)t.qv.style.display='none';
+   else{
+    const esc=x=>String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    let b='<div class="qh"><span>'+esc(q.ti)+'</span><span>'+esc(q.st)+(q.dt>=0?' · ⏳'+fmtTime(q.dt):'')+'</span></div><div class="qc">'+esc(q.ca)+'</div>';
+    if(q.dt>=0&&q.dm)b+='<div class="qb"><i style="width:'+clamp(q.dt/q.dm,0,1)*100+'%"></i></div>';
+    b+='<div class="qt">'+esc(q.tx)+'</div>';
+    if(q.o)b+='<div class="qo">'+q.o.map((o,i)=>'<span class="'+(i===q.sel?'sel':'')+'">'+String.fromCharCode(65+i)+'. '+esc(o)+'</span>').join('')+'</div>';
+    else b+='<div class="qi">Jawaban: '+esc(q.inp)+'</div>';
+    if(q.hn)b+='<div class="qf warn">'+esc(q.hn)+'</div>';
+    if(q.fb&&q.fb[0])b+='<div class="qf '+esc(q.fb[1])+'">'+esc(q.fb[0])+'</div>';
+    t.qv.innerHTML=b;t.qv.style.display='block';
+   }
+  }
  },
  onStat(m){
   const t=this.tiles[m.slot-2];if(!t)return;
@@ -2449,7 +2542,8 @@ const Net={
   t.f4.textContent=(m.loc?m.loc+' · ':'')+m.mode;
  },
  mvReset(){
-  this.tiles.forEach(t=>{t.got=false;t.ctx.clearRect(0,0,t.cv.width,t.cv.height);t.f1.textContent=t.f2.textContent=t.f3.textContent=t.f4.textContent='';});
+  this.mvSetZoom(0);
+  this.tiles.forEach(t=>{t.got=false;t.qKey='';t.hudK='';t.qv.style.display='none';t.hud.textContent='';t.ctx.clearRect(0,0,t.cv.width,t.cv.height);t.map.getContext('2d').clearRect(0,0,t.map.width,t.map.height);t.f1.textContent=t.f2.textContent=t.f3.textContent=t.f4.textContent='';});
   this.updateTiles();
  },
  updateTiles(){
@@ -2457,8 +2551,12 @@ const Net={
   setText($('mvTitle'),'ROOM MASTER · KODE '+rm.code);
   $('mvAbort').style.display=(rm.phase==='loading'||rm.phase==='playing')?'':'none';
   $('mvLobby').style.display=rm.phase==='lobby'?'':'none';
+  const vis=rm.players.filter(p=>p&&!p.left).length;
+  $('mvGrid').classList.toggle('n1',vis<=1);$('mvGrid').classList.toggle('n2',vis===2);   // 2 pemain: 2 layar berdampingan penuh
+  if(this.mvZoom&&!(rm.players[this.mvZoom-2]&&!rm.players[this.mvZoom-2].left))this.mvSetZoom(0);
   this.tiles.forEach((t,i)=>{
    const p=rm.players[i];
+   t.el.classList.toggle('empty',!p||!!p.left);
    t.nm.textContent=p?p.name:'— kosong —';
    t.st.textContent=p&&!p.connected?'terputus':'';
    let ov='';

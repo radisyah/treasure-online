@@ -1,6 +1,6 @@
-# Treasure Hunter 3D — Mode Online (1 Room Master + 2–4 pemain) untuk Vercel
+# TREAHUNT — Mode Online (1 Room Master + 2–4 pemain) untuk Vercel
 
-Versi online *Treasure Hunter 3D: Math Under Pressure* dengan cara kerja yang sama seperti **angry-birds-online**:
+Versi online *TREAHUNT* dengan cara kerja yang sama seperti **angry-birds-online**:
 kode room 5 karakter, token sesi di `localStorage`, polling ke satu Vercel Function (`/api/room`), dan state di **Upstash Redis**.
 
 > Versi lama memakai server WebSocket (`server.js`) yang harus berjalan terus di laptop. Vercel bersifat *serverless* (tidak ada proses yang

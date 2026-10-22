@@ -1,7 +1,7 @@
 {
-  "name": "Treasure Hunter 3D: Math Under Pressure",
-  "short_name": "Treasure Hunter",
-  "description": "Game perburuan peti 3D dengan soal matematika. Mode online: Room Master + 2–4 pemain.",
+  "name": "TREAHUNT",
+  "short_name": "TREAHUNT",
+  "description": "Game perburuan harta karun 3D dengan teka-teki. Mode online: Room Master + 2–4 pemain.",
   "start_url": "/",
   "scope": "/",
   "display": "fullscreen",
