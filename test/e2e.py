@@ -103,7 +103,13 @@ def main():
             linked = wait(M, "Object.values(__t.Net.links).some(l=>l.ok)", 25000)
             check('video WebRTC tersambung ke Master (lewat sinyal Redis/polling)', linked, '(butuh ICE lokal; abaikan bila lingkungan memblokir)')
             if linked:
-                check('elemen <video> Master menerima aliran', wait(M, "[...document.querySelectorAll('#mvGrid video')].some(v=>v.srcObject)", 8000))
+                # mode data pose: tidak ada <video>; notifikasi layar pemain harus tampil di tile Master
+                P1.evaluate("__t.Net.pushNote('Uji notifikasi pemain 1','good',4000)")
+                P2.evaluate("__t.Net.pushNote('Uji notifikasi pemain 2','warn',4000)")
+                check('notifikasi Pemain 1 tampil di tile Master (slot 1)', wait(M, "/Uji notifikasi pemain 1/.test(document.querySelectorAll('#mvGrid .mvt')[0].querySelector('.mvtoasts').textContent)", 6000))
+                check('notifikasi Pemain 2 tampil di tile Master (slot 2)', wait(M, "/Uji notifikasi pemain 2/.test(document.querySelectorAll('#mvGrid .mvt')[1].querySelector('.mvtoasts').textContent)", 6000))
+                check('notifikasi dikirim 3x tetapi hanya tampil sekali (duplikat dibuang)', M.evaluate("document.querySelectorAll('#mvGrid .mvt')[0].querySelectorAll('.mvtoast').length") == 1)
+                check('resolusi tile Master default 720p', M.evaluate('__t.Net.FW') == 1280 and M.evaluate('__t.Net.FH') == 720)
 
             print('Akhir ronde: P1 menang, P2 gagal')
             P1.evaluate('__t.winLevel()')
