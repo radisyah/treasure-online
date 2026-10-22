@@ -18,7 +18,7 @@ status room, hitung mundur serentak, statistik langsung, dan hasil akhir. Gamepl
 ## Cara bermain
 1. **Room Master**: buka situs → MAIN ONLINE → isi nama → **BUAT ROOM BARU**. Bagikan **tautan** (klik teks di bawah lobi untuk menyalin) atau **kode 5 karakter**.
 2. **Pemain 1–4**: buka tautan / masukkan kode → **GABUNG ROOM** → tekan **SIAP**.
-3. Master memilih level, lalu **MULAI PERTANDINGAN** (aktif bila jumlah pemain ≥ `MIN_PLAYERS` dan semuanya siap).
+3. Master memilih level, lalu **MULAI PERTANDINGAN** (aktif bila jumlah pemain ≥ `MIN_PLAYERS` — bawaan **2** — dan semua pemain yang hadir sudah menekan SIAP).
 4. Semua pemain memuat level, hitung mundur 3-2-1 **serentak** (memakai jam server), lalu bermain. Master melihat 4 layar + timer, peti, jebakan, dan skor tiap pemain.
 5. Setelah semua selesai → papan peringkat; semua kembali ke lobi (Master bisa memilih level lain). Master juga bisa **HENTIKAN** kapan saja.
 
@@ -33,7 +33,7 @@ Aturan khusus versi online:
 1. Taruh folder ini di repositori GitHub, lalu **Add New → Project** di Vercel (preset "Other", tanpa build command). Atau: `npm i -g vercel && vercel`.
 2. Dashboard proyek → **Storage / Marketplace** → tambahkan **Upstash Redis** → hubungkan ke proyek. Otomatis terisi
    `KV_REST_API_URL` + `KV_REST_API_TOKEN` (atau `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`); keduanya didukung.
-3. (Opsional) **Settings → Environment Variables**: `MIN_PLAYERS` (1–4, bawaan **4**; isi `2` untuk uji coba) dan TURN (lihat bawah).
+3. (Opsional) **Settings → Environment Variables**: `MIN_PLAYERS` (1–4, bawaan **2**; isi `4` bila ingin wajib 4 pemain; jangan diisi bila cukup 2) dan TURN (lihat bawah).
 4. **Redeploy** (variabel baru hanya berlaku untuk deployment baru).
 5. Buka URL proyek → buat room → bagikan tautan/kodenya.
 
@@ -41,9 +41,10 @@ Bila Redis belum terhubung, API membalas: *"Database belum dikonfigurasi…"*.
 
 ## Video layar pemain → Room Master (WebRTC) dan TURN
 Video **tidak lewat server Vercel**. Master membuat *offer*, pemain menjawab; server hanya menukar pesan sinyal lewat Redis (tidak ada WebSocket).
+**Sinyal cepat (long-poll):** handshake dimulai begitu pemain selesai memuat level (Master mengirim *offer* ke pemain yang sudah `loaded`), jadi hitung mundur ±4 dtk dipakai untuk menyambungkan video dan gambar umumnya sudah tampil saat pertandingan mulai. Offer/answer dibaca lewat `GET /api/room?action=sig`: server menahan permintaan (maks. 5 dtk, cek Redis tiap 0,12 dtk) dan menjawab segera setelah pesan ada, sehingga pesan sampai dalam ±0,1 dtk, bukan menunggu polling 0,6–2 dtk. Polling `state`/`stat` tetap menjadi cadangan (mis. untuk offer ulang). Kredensial TURN juga diminta lebih awal (saat ronde dimulai) dan pengumpulan kandidat ICE tanpa TURN tidak lagi menunggu status `complete`.
 Panel soal (HTML) tidak ikut tertangkap dari kanvas WebGL, jadi klien menggambar ulang panel itu ke kanvas siaran (`Net.drawPuzzle`): judul, timer, soal, pilihan (yang dipilih disorot), ketikan jawaban, petunjuk, dan umpan balik benar/salah tampil di layar Master secara langsung.
-Kualitas siaran: **640×360, 30 fps, ±800 kbps** per pemain (diturunkan dari 960×540@60 versi LAN agar kuat lewat internet; ubah `SW`, `SH`, `FPS`, `BITRATE` di objek `Net` pada `public/index.html`).
-Jaringan lemah → kualitas gambar yang turun, bukan fps (`maintain-framerate`). Cadangan JPEG lewat server **dihapus** karena butuh WebSocket.
+Kualitas siaran: **640×360 (dikunci), 24 fps, ±800 kbps** per pemain (diturunkan dari 960×540@60 versi LAN agar kuat lewat internet; ubah `SW`, `SH`, `FPS`, `BITRATE` di objek `Net` pada `public/index.html`).
+Resolusi dikunci di 360p (`maintain-resolution` + `contentHint='detail'`): bila jaringan tidak sanggup membawa 800 kbps, yang turun adalah fps (di bawah 24), bukan resolusinya. Cadangan JPEG lewat server **dihapus** karena butuh WebSocket.
 
 **Agar Master bisa melihat dari SEMUA jaringan (4G/CGNAT, wifi sekolah/kantor, NAT ketat) wajib mengaktifkan server TURN (relay).**
 STUN saja hanya menembus sebagian jaringan.
@@ -88,8 +89,8 @@ python3 test/e2e.py       # 3 browser Chromium: Room Master + 2 pemain (pip inst
 Game memuat `three.js` dari cdnjs, jadi perangkat pemain perlu internet. Uji dengan Redis sungguhan: salin `.env.example` → `.env.local` dan isi variabelnya.
 
 ## Catatan biaya & batasan
-- Redis: pemain yang bermain ±2 perintah/dtk (statistik tiap 2 dtk), Master ±3–8 perintah/dtk (polling 1,5 dtk; 0,6 dtk selama video belum tersambung),
-  pemain di lobi/papan skor ±4 perintah/dtk. Satu ronde 4 pemain ±10 menit ≈ 7.000–10.000 perintah.
+- Redis: pemain yang bermain ±2 perintah/dtk (statistik tiap 2 dtk), Master ±3–8 perintah/dtk (polling 1,5 dtk; 0,6 dtk selama video belum tersambung; 0,5 dtk saat memuat level),
+  pemain di lobi/papan skor ±4 perintah/dtk. Long-poll sinyal menambah ±8 perintah/dtk hanya untuk peserta yang sedang menunggu offer/answer (beberapa detik per pemain; berhenti begitu video tersambung). Satu ronde 4 pemain ±10 menit ≈ 7.000–10.000 perintah.
 - **Skor dihitung di perangkat pemain**, jadi tidak kebal dari kecurangan lewat konsol browser. Server hanya membatasi nilai ke rentang wajar
   (skor ≤ 10.000, dst.). Cocok untuk kelas/teman, bukan turnamen berhadiah.
 - Tab yang disembunyikan membuat browser memperlambat timer; statistik tetap dikirim tetapi video bisa membeku sampai tab dibuka lagi.
@@ -97,7 +98,7 @@ Game memuat `three.js` dari cdnjs, jadi perangkat pemain perlu internet. Uji den
 
 ## Struktur
 ```
-api/room.js        satu Vercel Function: semua aksi (create/join/ready/level/start/loaded/stat/finish/forfeit/abort/leave/signal) + polling + ICE
+api/room.js        satu Vercel Function: semua aksi (create/join/ready/level/start/loaded/stat/finish/forfeit/abort/leave/signal) + polling + ICE + `sig` (long-poll sinyal WebRTC)
 lib/store.js       Upstash Redis lewat REST (tanpa dependensi npm); memori proses hanya untuk lokal/tes
 lib/ice.js         STUN + TURN (Cloudflare / Metered / coturn / statis)
 lib/core.js        penyaringan statistik & hasil dari klien

@@ -21,6 +21,15 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   console.log('Tes API pada', base, '(' + getStore().kind + ')');
   let code, M, A, B, C;
 
+  await T('bawaan jumlah pemain minimum = 2 (tanpa MIN_PLAYERS); env tetap dihormati & dibatasi 1–4', async () => {
+    const saved = process.env.MIN_PLAYERS, minOf = async () => (await post('create', { name: 'X' })).room.min;
+    try {
+      delete process.env.MIN_PLAYERS; assert.strictEqual(await minOf(), 2);
+      process.env.MIN_PLAYERS = '4'; assert.strictEqual(await minOf(), 4);
+      process.env.MIN_PLAYERS = '99'; assert.strictEqual(await minOf(), 4);
+      process.env.MIN_PLAYERS = 'abc'; assert.strictEqual(await minOf(), 2);
+    } finally { if (saved === undefined) delete process.env.MIN_PLAYERS; else process.env.MIN_PLAYERS = saved; }
+  });
   await T('buat room (pembuat = Room Master), kode 5 karakter', async () => {
     M = await post('create', { name: '<i>Guru</i>' });
     assert(M.ok && M.code.length === 5 && M.role === 'master' && M.slot === 1 && M.room.phase === 'lobby' && M.room.min === 2);
@@ -60,6 +69,31 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     assert.strictEqual((await post('join', { code, name: 'Telat' })).http, 409);
     assert.strictEqual((await post('loaded', { code, token: M.token })).http, 403);
   });
+  await T('handshake saat loading: flag loaded, offer/answer diterima, long-poll sig (pemain & Master) tanpa menunggu polling', async () => {
+    const sig = (tok, q) => api('GET', null, Object.assign({ action: 'sig', code, token: tok, g: 1 }, q));
+    let m = await state(code, M.token, 0); assert.deepStrictEqual(m.room.players.map(p => p && p.loaded), [false, false, null, null]);
+    assert((await post('loaded', { code, token: A.token })).ok);
+    m = await state(code, M.token, 0); assert.deepStrictEqual(m.room.players.map(p => p && p.loaded), [true, false, null, null]);
+    // offer saat loading diterima server; sig pemain langsung membawanya
+    assert((await post('signal', { code, token: M.token, kind: 'offer', to: '2', n: 1, sdp: 'v=0 EARLY' })).ok);
+    let r = await sig(A.token, { n: 0, wait: 0 }); assert(r.ok && r.offer && r.offer.n === 1 && r.offer.sdp === 'v=0 EARLY');
+    r = await sig(A.token, { n: 1, wait: 0 }); assert(r.ok && !r.offer && !r.idle);
+    // long-poll: offer baru dikirim 300 ms kemudian → sig menjawab segera setelah itu (bukan menunggu batas waktu 3 dtk)
+    let t0 = Date.now();
+    const waitOffer = sig(A.token, { n: 1, wait: 3000 });
+    await sleep(300); await post('signal', { code, token: M.token, kind: 'offer', to: '2', n: 2, sdp: 'v=0 OFFER2' });
+    r = await waitOffer; assert(r.offer && r.offer.n === 2 && Date.now() - t0 < 1500, 'lama: ' + (Date.now() - t0));
+    // Master: answer dikirim 300 ms kemudian → long-poll Master menerimanya segera
+    t0 = Date.now();
+    const waitAns = sig(M.token, { an: '2:1', wait: 3000 });
+    await sleep(300); assert((await post('signal', { code, token: A.token, kind: 'answer', n: 2, sdp: 'v=0 ANS2' })).ok);
+    r = await waitAns; assert(r.sigs && r.sigs['2'].n === 2 && r.sigs['2'].sdp === 'v=0 ANS2' && Date.now() - t0 < 1500, 'lama: ' + (Date.now() - t0));
+    r = await sig(M.token, { an: '2:2', wait: 250 }); assert(r.ok && !r.sigs && !r.idle);   // sudah dikenal → kosong setelah batas waktu
+    // ronde lain / token salah / pemain tidak ikut
+    r = await sig(M.token, { g: 2, wait: 0 }); assert(r.ok && r.idle === true);
+    assert.strictEqual((await sig('salah', { wait: 0 })).http, 401);
+    assert.strictEqual((await api('GET', null, { action: 'sig', code: 'ZZZZZ', token: M.token, g: 1 })).http, 404);
+  });
   await T('semua "loaded" → fase playing dengan goAt ±4 dtk di depan', async () => {
     let r = await post('loaded', { code, token: A.token }); assert.strictEqual(r.room.phase, 'loading');
     r = await post('loaded', { code, token: B.token }); assert.strictEqual(r.room.phase, 'playing');
@@ -89,12 +123,16 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     const s2 = await post('stat', { code, token: B.token, sigN: 1 }); assert(!s2.offer);
     assert((await post('signal', { code, token: B.token, kind: 'answer', n: 1, sdp: 'v=0 ANSWER' })).ok);
     const m = await state(code, M.token, 0, { g: 1, an: '' }); assert(m.room.sigs && m.room.sigs['3'].sdp === 'v=0 ANSWER');
-    const m2 = await state(code, M.token, 0, { g: 1, an: '3:1' }); assert(!m2.room.sigs);
+    const m2 = await state(code, M.token, 0, { g: 1, an: '2:2,3:1' }); assert(!m2.room.sigs);   // slot 2 menjawab di tes handshake saat loading
   });
   await T('semua selesai → kembali ke lobi, ready direset, hasil tetap ada untuk papan peringkat', async () => {
     const r = await post('finish', Object.assign({ code, token: B.token }, win(9000)));
     assert(r.ok && r.room.phase === 'lobby'); assert(r.room.players.filter(Boolean).every(p => !p.ready && p.result));
     const m = await state(code, M.token, 0); assert.strictEqual(m.room.phase, 'lobby'); assert(!m.room.stats);
+  });
+  await T('di luar ronde: signal 409 dan sig \"idle\"', async () => {
+    assert.strictEqual((await post('signal', { code, token: M.token, kind: 'offer', to: '3', n: 9, sdp: 'v=0' })).http, 409);
+    const r = await api('GET', null, { action: 'sig', code, token: M.token, g: 1, wait: 0 }); assert(r.ok && r.idle === true && r.phase === 'lobby');
   });
   await T('ronde 2: Master menghentikan → abort tercatat, hasil dihapus', async () => {
     await post('ready', { code, token: A.token, ready: true }); await post('ready', { code, token: B.token, ready: true });

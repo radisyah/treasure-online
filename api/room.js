@@ -18,10 +18,12 @@ const GO_DELAY_MS = 4000;              // jeda dari "semua siap" ke "mulai" (hit
 const MAX_GAME_MS = 45 * 60 * 1000;    // batas keras satu pertandingan
 const SIG_TTL = 900;                   // detik; pesan sinyal WebRTC (offer/answer)
 const MAX_SDP = 24000;
+const SIG_HOLD_MS = 5000;              // long-poll sinyal: server menahan permintaan sampai ada pesan baru (maks. ini; fungsi Vercel dibatasi 10 dtk)
+const SIG_STEP_MS = 120;               // selang cek Redis selama menahan permintaan
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const SEATS = ['2', '3', '4', '5'];    // slot pemain; indeks array = slot - 2
 
-const minPlayers = () => Math.max(1, Math.min(4, parseInt(process.env.MIN_PLAYERS || '4', 10) || 4));
+const minPlayers = () => Math.max(1, Math.min(4, parseInt(process.env.MIN_PLAYERS || '2', 10) || 2));   // bawaan 2: Master bisa mulai begitu 2 pemain hadir & siap
 const fail = (status, msg) => { const e = new Error(msg); e.status = status; return e; };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const rid = n => crypto.randomBytes(n).toString('hex');
@@ -91,7 +93,7 @@ function viewFor(room, seat, now, pres, stats) {
     role: isM ? 'master' : 'player', slot: isM ? 1 : seat,
     master: { name: room.master.name, online: !!pres.m },
     players: room.slots.map((p, i) => p ? {
-      slot: i + 2, name: p.name, ready: !!p.ready, left: !!p.left, connected: connectedOf(room, i + 2, p, pres, stats, now),
+      slot: i + 2, name: p.name, ready: !!p.ready, left: !!p.left, loaded: !!p.loaded, connected: connectedOf(room, i + 2, p, pres, stats, now),
       part: room.part.includes(i + 2), result: p.result || null
     } : null)
   };
@@ -289,20 +291,21 @@ async function actLeave(b) {
     return { room: viewFor(room, seat, now, {}, {}) };
   });
 }
-/* Sinyal WebRTC untuk siaran layar pemain ke Room Master. Master -> pemain: offer; pemain -> Master: answer. Video lewat P2P/TURN, bukan lewat server ini. */
+/* Sinyal WebRTC untuk siaran layar pemain ke Room Master. Master -> pemain: offer; pemain -> Master: answer. Video lewat P2P/TURN, bukan lewat server ini.
+   Boleh dikirim sejak fase loading (hitung mundur ±4 dtk dipakai untuk handshake); dibaca lewat actSig (long-poll) atau cadangan stat/state. */
 async function actSignal(b) {
   const code = normCode(b.code), store = getStore();
   const room = parse(await store.cmd(['GET', roomKey(code)]));
   if (!room) throw fail(404, 'Room tidak ditemukan atau sudah kedaluwarsa.');
   const seat = seatOf(room, b.token);
-  if (room.phase !== 'playing') throw fail(409, 'Pertandingan tidak sedang berjalan.');
+  if (room.phase !== 'playing' && room.phase !== 'loading') throw fail(409, 'Pertandingan tidak sedang berjalan.');   // handshake boleh mulai saat loading, supaya video sudah tersambung ketika hitung mundur selesai
   const sdp = String(b.sdp || ''), n = int0(b.n);
   if (!sdp || sdp.length > MAX_SDP) throw fail(400, 'SDP tidak valid.');
   let id, kind;
   if (b.kind === 'offer') {
     if (seat !== 'master') throw fail(403, 'Hanya Room Master yang mengirim penawaran.');
     id = String(b.to); const p = SEATS.includes(id) && playerAt(room, Number(id));
-    if (!p || p.result || p.left) throw fail(404, 'Pemain tidak ditemukan.');
+    if (!p || p.result || p.left || !room.part.includes(Number(id))) throw fail(404, 'Pemain tidak ditemukan.');
     kind = 'o';
   } else if (b.kind === 'answer') {
     if (seat === 'master') throw fail(403, 'Room Master tidak menjawab.');
@@ -310,6 +313,37 @@ async function actSignal(b) {
   } else throw fail(400, 'Jenis sinyal tidak dikenal.');
   await store.cmd(['SET', sigKey(code, room.roundNo, id, kind), JSON.stringify({ n, sdp }), 'EX', SIG_TTL]);
   return {};
+}
+/* Long-poll sinyal WebRTC (pengganti menunggu polling `state`/`stat` untuk pertukaran offer/answer).
+   Server menahan permintaan (cek Redis tiap SIG_STEP_MS) sampai pesan baru ada, jadi pesan sampai dalam ±0,1 dtk, bukan 0,6–2 dtk.
+   Pemain  : ?action=sig&g=<ronde>&n=<offer yang sudah dikenal>&wait=<ms>      -> { offer } bila ada offer baru dari Master
+   Master  : ?action=sig&g=<ronde>&an=<slot:n,slot:n>&wait=<ms>                 -> { sigs: { slot: {n,sdp} } } bila ada answer baru
+   Balasan kosong {} = tidak ada yang baru (klien memanggil lagi). { idle: true } = ronde sudah tidak berjalan / bukan ronde ini. */
+async function actSig(q) {
+  const code = normCode(q.code), store = getStore(), t0 = Date.now();
+  let room = parse(await store.cmd(['GET', roomKey(code)]));
+  if (!room) throw fail(404, 'Room tidak ditemukan atau sudah kedaluwarsa.');
+  const seat = seatOf(room, String(q.token || ''));
+  const g = int0(q.g), wait = Math.min(SIG_HOLD_MS, int0(q.wait)), known = {}, knownN = int0(q.n);
+  if (seat === 'master') String(q.an || '').split(',').forEach(x => { const [i, n] = x.split(':'); if (i) known[i] = Number(n); });
+  for (let i = 0; ; i++) {
+    const active = !room.closed && (room.phase === 'loading' || room.phase === 'playing') && room.roundNo === g && (seat === 'master' || room.part.includes(seat));
+    if (!active) return { idle: true, phase: room.phase, roundNo: room.roundNo, closed: room.closed || null };
+    if (seat === 'master') {
+      const raws = await store.cmd(['MGET'].concat(SEATS.map(id => sigKey(code, g, id, 'a'))));
+      const sigs = {}; SEATS.forEach((id, k) => { const a = parse(raws[k]); if (a && known[id] !== a.n) sigs[id] = a; });
+      if (Object.keys(sigs).length) return { sigs };
+    } else {
+      const offer = parse(await store.cmd(['GET', sigKey(code, g, seat, 'o')]));
+      if (offer && offer.n !== knownN) return { offer };
+    }
+    if (Date.now() - t0 + SIG_STEP_MS >= wait) return {};
+    await sleep(SIG_STEP_MS);
+    if (i % 8 === 7) {   // sekitar tiap 1 dtk: pastikan room belum berganti fase / ditutup
+      room = parse(await store.cmd(['GET', roomKey(code)]));
+      if (!room) throw fail(404, 'Room tidak ditemukan atau sudah kedaluwarsa.');
+    }
+  }
 }
 /* Polling: satu round-trip (GET room + tanda hadir + statistik [+ jawaban sinyal]), lalu 1 SET tanda hadir. Menulis room hanya bila ada tenggat lewat. */
 async function actState(q) {
@@ -363,7 +397,7 @@ module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   try {
     let out;
-    if (req.method === 'GET') out = (req.query && req.query.action === 'ice') ? await actIce(req.query) : await actState(req.query || {});
+    if (req.method === 'GET') out = (req.query && req.query.action === 'ice') ? await actIce(req.query) : (req.query && req.query.action === 'sig') ? await actSig(req.query) : await actState(req.query || {});
     else if (req.method === 'POST') {
       const b = readBody(req);
       const acts = { create: actCreate, join: actJoin, ready: actReady, level: actLevel, start: actStart, loaded: actLoaded, stat: actStat, finish: actFinish, forfeit: actForfeit, abort: actAbort, leave: actLeave, signal: actSignal };

@@ -25,7 +25,7 @@ body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"Se
 .btn.primary{background:linear-gradient(#117a96,#0b546b);border-color:var(--cyan)}
 .btn.danger{border-color:var(--red);background:linear-gradient(#4a1620,#2c0c14)}
 .btn.small{padding:.3rem .6rem;min-height:2rem;font-size:.8rem}
-.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,8,18,.7);z-index:20;overflow:auto;padding:1rem}
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,8,18,.7);z-index:20;overflow:auto;padding:max(1rem,env(safe-area-inset-top)) max(1rem,env(safe-area-inset-right)) max(1rem,env(safe-area-inset-bottom)) max(1rem,env(safe-area-inset-left))}
 .screen.show{display:flex}
 #confirm{z-index:40;background:rgba(0,0,0,.6)}
 #loading,#error{z-index:50;background:#050912}
@@ -162,6 +162,22 @@ select,input[type=range]{font:inherit;background:#0d2238;color:var(--text);borde
 .score{opacity:0;animation:sc 2s .8s ease-out infinite}
 @keyframes sc{0%{opacity:0;transform:translateY(8px)}25%{opacity:1}100%{opacity:0;transform:translateY(-26px)}}
 @media(max-width:820px){#menu .mwrap{grid-template-columns:1fr}}
+.mhead,.mbtns{display:contents}   /* desktop: anak-anaknya tetap item flex langsung dari .mleft (tampilan tidak berubah) */
+#menu .mnote{font-size:.75rem;margin:.3rem 0 0;text-align:center}
+/* HP portrait: lebih rapat supaya tombol utama muncul tanpa harus scroll jauh */
+@media(max-width:600px){
+ #menu{padding-left:max(.6rem,env(safe-area-inset-left));padding-right:max(.6rem,env(safe-area-inset-right))}
+ #menu .mwrap{gap:.7rem}
+ #menu .mleft{padding:1rem}
+ #menu .mlogo{font-size:2.1rem}
+ #menu .title{font-size:clamp(1.3rem,6vw,2.2rem);letter-spacing:.08em}
+ #menu .subtitle{font-size:.8rem;letter-spacing:.22em;margin:.1rem 0 .3rem}
+ .mtag{font-size:.85rem;margin-bottom:.3rem}
+ #menu .mleft .btn{font-size:.9rem;letter-spacing:.02em;padding-left:.9rem;padding-right:.6rem}
+ #menu #mNew{font-size:1.05rem}
+ #menu .mrow2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ #menu .mrow2 .btn{padding-left:.7rem;padding-right:.4rem;font-size:.82rem;white-space:nowrap}
+}
 @media(prefers-reduced-motion:reduce){#menu *{animation:none!important}.late,.glowc{opacity:1}.lid{transform:rotate(-62deg)}}
 
 /* ===== ANDROID / SENTUH ===== */
@@ -192,7 +208,21 @@ body.touch #toast{top:3.4rem}
 body.touch .btn.small{min-height:2.4rem;padding:.4rem .8rem}
 @media (max-height:520px){
  #menu .mdemo{display:none}
- #menu .mwrap{grid-template-columns:minmax(0,420px)}
+ #menu .mwrap{grid-template-columns:minmax(0,1fr);width:min(780px,100%)}
+ #menu{padding-top:max(.5rem,env(safe-area-inset-top));padding-bottom:max(.5rem,env(safe-area-inset-bottom))}
+ #menu .mleft{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:1.1rem;align-items:center;padding:.6rem .9rem}
+ #menu .mhead,#menu .mbtns{display:flex;flex-direction:column;gap:.35rem;min-width:0}
+ #menu .mlogo{font-size:1.9rem}
+ #menu .title{font-size:clamp(1.1rem,3.4vw,1.6rem);letter-spacing:.08em}
+ #menu .subtitle{font-size:.72rem;letter-spacing:.2em;margin:.1rem 0 .2rem}
+ #menu .mtag{font-size:.78rem;line-height:1.35;margin:0}
+ #menu .mleft .btn{min-height:2.3rem;padding:.3rem .9rem;font-size:.88rem}
+ #menu #mNew{min-height:2.7rem;font-size:1rem;display:flex;align-items:center;justify-content:space-between}
+ #menu #mNew::after{float:none}
+ #menu .mrow2{gap:.4rem}
+ #menu .mrow2 .btn{padding-left:.7rem;padding-right:.4rem;font-size:.8rem;letter-spacing:.02em;white-space:nowrap}
+ #menu .mchips,#menu .mnoteTxt{display:none}
+ #menu .mnote{margin:0}
  .card{padding:.7rem 1rem}
  .qtext{font-size:1.1rem;margin:.1rem 0 .4rem}
  .cat{margin:.4rem 0 .1rem}
@@ -272,9 +302,12 @@ body.touch .btn.small{min-height:2.4rem;padding:.4rem .8rem}
 <div id="menu" class="screen">
  <div class="mwrap">
   <div class="card col mleft">
+    <div class="mhead">
     <div class="mlogo" aria-hidden="true">💎</div>
     <h1 class="title">TREASURE HUNTER 3D</h1><div class="subtitle">MATH UNDER PRESSURE</div>
     <p class="mtag">Jelajahi kuil kuno, <b>hitung cepat</b> soal + − × ÷, dan buka semua peti harta sebelum waktu habis!</p>
+    </div>
+    <div class="mbtns">
     <button class="btn primary" id="mNew" data-autofocus>MULAI SOLO</button>
     <button class="btn primary" id="mOnline" style="background:linear-gradient(100deg,#7a3fd0,#c0398e);border-color:#ff5ad6">🌐 MAIN ONLINE (MULTIPLAYER)</button>
     <button class="btn" id="mCont">LANJUTKAN CAMPAIGN</button>
@@ -282,7 +315,8 @@ body.touch .btn.small{min-height:2.4rem;padding:.4rem .8rem}
     <div class="mrow2"><button class="btn" id="mSet">PENGATURAN</button><button class="btn" id="mGuide">PANDUAN</button></div>
     <div class="mrow2"><button class="btn" id="mFs">⛶ LAYAR PENUH</button><button class="btn" id="mCred">KREDIT</button></div>
     <div class="mchips"><span>🗺 5 level</span><span>➕➖✖️➗ Operasi campuran</span><span>⏱ Berpacu waktu</span><span>🏆 Peringkat S–D</span></div>
-    <p class="dim" style="font-size:.75rem;margin:.3rem 0 0;text-align:center">Mendukung keyboard + mouse dan layar sentuh (Android). Ketuk LAYAR PENUH lalu putar ke landscape.<span id="storeWarn"></span></p>
+    <p class="dim mnote"><span class="mnoteTxt">Mendukung keyboard + mouse dan layar sentuh (Android). Ketuk LAYAR PENUH lalu putar ke landscape.</span><span id="storeWarn"></span></p>
+    </div>
   </div>
   <div class="card mdemo" aria-label="Demo cara bermain">
     <div class="dhead"><b>▶ LIHAT CARA BERMAIN</b><span>● DEMO</span></div>
@@ -1772,14 +1806,14 @@ function bindTouch(){
    Kode room 5 karakter, token sesi di localStorage. Video layar pemain -> Room Master lewat WebRTC (Master membuat offer,
    pemain menjawab; sinyal lewat /api/room, video TIDAK lewat server). Tanpa server TURN, video hanya tembus sebagian jaringan. */
 const Net={
- FW:576,FH:324,SW:640,SH:360,FPS:30,BITRATE:800000,   /* siaran video 360p · 30 fps (ubah di sini bila perlu) */
+ FW:576,FH:324,SW:640,SH:360,FPS:24,BITRATE:800000,   /* siaran video 360p · 24 fps, resolusi dikunci (ubah di sini bila perlu) */
  API:'/api/room',SKEY:'th3d_online_session',
  STUN_ONLY:{iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}],relay:false},
  on:null,role:null,slot:0,code:'',name:'',room:null,live:false,joined:false,
  round:0,goneRound:0,abortSeen:0,clockOff:0,
  hidAt:0,lastDraw:0,tiles:[],
  pollT:0,polling:false,statT:0,fastT:0,failN:0,statBusy:false,
- scv:null,sctx:null,feed:null,sendPC:null,sendN:0,sendBusy:false,
+ scv:null,sctx:null,feed:null,sendPC:null,sendN:0,sendBusy:false,offerLoop:null,ansLoop:false,waitT:0,waitTxt:'',
  icePromise:null,iceRelay:true,links:{},
  me(){return this.room&&this.slot>=2?this.room.players[this.slot-2]:null;},
  setLoading(a,b){const c=$('loading');c.querySelector('h2').textContent=a;c.querySelector('p').textContent=b;},
@@ -1792,6 +1826,13 @@ const Net={
   let r,j;
   try{r=await fetch(this.API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});j=await r.json();}
   catch(e){throw Object.assign(new Error('Tidak bisa terhubung ke server. Periksa koneksi internetmu.'),{status:0});}
+  if(!j.ok)throw Object.assign(new Error(j.error||'Terjadi kesalahan.'),{status:r.status});
+  return j;
+ },
+ /* long-poll sinyal WebRTC: server menahan permintaan sampai offer/answer baru ada (lihat actSig) */
+ async sig(p){
+  const r=await fetch(this.API+'?'+new URLSearchParams(Object.assign({action:'sig',code:this.on.code,token:this.on.token},p)),{cache:'no-store'});
+  const j=await r.json();
   if(!j.ok)throw Object.assign(new Error(j.error||'Terjadi kesalahan.'),{status:r.status});
   return j;
  },
@@ -1929,6 +1970,7 @@ const Net={
  pollDelay(){
   if(document.hidden)return 4000;
   const m=this.room;if(!m)return 1000;
+  if(this.role==='master'&&m.phase==='loading')return 500;   // cepat tahu siapa yang sudah selesai memuat → offer segera dikirim
   if(this.role==='master'&&m.phase==='playing'){
    const need=m.players.filter(p=>p&&p.part&&!p.result&&p.connected).length,linked=Object.keys(this.links).filter(k=>this.links[k].ok).length;
    return linked<need?600:1500;   // cepat selama video belum tersambung
@@ -1998,14 +2040,17 @@ const Net={
  /* ---- alur pertandingan ---- */
  startMatch(level){
   this.live=false;this.stopStats();this.closeRtc();
+  this.getIce();   // minta kredensial STUN/TURN sekarang (paralel dengan pemuatan level) supaya handshake tidak menunggu
   if(this.role==='master'){this.mvReset();UI.show('masterview');return;}
   this.setLoading('MEMUAT LEVEL…','Menyiapkan arena petualangan');
   loadLevel(clamp(level,1,LEVELS.length)-1);
  },
  async onLoaded(){
   this.setLoading('MENUNGGU PEMAIN LAIN…','Level siap. Pertandingan dimulai serentak.');
+  // handshake WebRTC dimulai SEKARANG (saat menunggu & hitung mundur), bukan setelah ronde mulai
+  this.startFeed();this.waitTxt='Level siap';this.drawWait(this.waitTxt);
   for(let i=0;i<6&&this.on&&this.role==='player';i++){
-   if(await this.act('loaded'))return;
+   if(await this.act('loaded')){this.listenOffer();return;}
    await this.sleep(1200);
   }
  },
@@ -2017,12 +2062,14 @@ const Net={
    const left=goAt-(Date.now()+this.clockOff);
    if(left>0){
     const n=Math.ceil(left/1000);
-    this.setLoading('MULAI DALAM '+n,'Bersiap! Buka semua peti lebih cepat dari lawanmu.');
+    this.setLoading('MULAI DALAM '+n,'Bersiap! Buka semua peti lebih cepat dari lawanmu.');this.waitTxt='Mulai dalam '+n;
     if(n!==lastN){lastN=n;Sfx.tick();}
     setTimeout(tick,Math.min(250,left));
    }else{
     this.setLoading('MEMUAT LEVEL…','Menyiapkan arena petualangan');
-    startMission();this.live=true;this.startStatLoop();this.startFeed();
+    startMission();this.live=true;this.startStatLoop();
+    if(!this.feed)this.startFeed();   // normalnya sudah berjalan sejak level selesai dimuat (koneksi sudah/segera tersambung)
+    this.listenOffer();
    }
   };
   tick();
@@ -2069,7 +2116,7 @@ const Net={
 
  /* ---- statistik langsung pemain -> Master (±2 dtk, lewat HTTP) ---- */
  startStatLoop(){
-  this.stopStats();this.sendN=0;
+  this.stopStats();
   this.sendStat();this.statT=setInterval(()=>this.sendStat(),2000);
   // sebelum video tersambung, cek penawaran Master lebih sering (0,7 dtk) supaya gambar cepat muncul
   let n=0;this.fastT=setInterval(()=>{if(!this.live||this.sendN>0||++n>40){clearInterval(this.fastT);this.fastT=0;return;}this.sendStat();},700);
@@ -2094,7 +2141,7 @@ const Net={
   finally{this.statBusy=false;}
  },
 
- /* ---- siaran layar pemain (WebRTC, 360p · 30 fps). Master = penawar (offer), pemain = penjawab (answer) ---- */
+ /* ---- siaran layar pemain (WebRTC, 360p · 24 fps). Master = penawar (offer), pemain = penjawab (answer) ---- */
  afterRender(){
   if(!G.online||this.role!=='player'||!G.run||!this.live||G.run.finished||!this.sctx)return;
   const now=performance.now();if(now-this.lastDraw<1000/this.FPS-4)return;
@@ -2107,7 +2154,7 @@ const Net={
   const sw=gl.width,sh=gl.height,ar=W/H;let cw=sw,ch=sw/ar;if(ch>sh){ch=sh;cw=sh*ar;}
   ctx.drawImage(gl,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,W,H);
  },
- /* ---- gambar ulang panel soal ke kanvas siaran (dibaca dari panel HTML aslinya, jadi selalu sinkron, ±30 fps) ---- */
+ /* ---- gambar ulang panel soal ke kanvas siaran (dibaca dari panel HTML aslinya, jadi selalu sinkron, ±24 fps) ---- */
  wrapText(ctx,text,maxW){
   const out=[];
   String(text||'').split('\n').forEach(par=>{
@@ -2188,6 +2235,12 @@ const Net={
   }
   ctx.restore();
  },
+ drawWait(txt){
+  const c=this.sctx;if(!c||!this.feed)return;
+  c.fillStyle='#050c18';c.fillRect(0,0,this.SW,this.SH);
+  c.fillStyle='#35e0ff';c.font='bold 30px "Segoe UI",Roboto,Arial,sans-serif';c.textAlign='center';c.textBaseline='middle';
+  c.fillText(txt,this.SW/2,this.SH/2);c.textAlign='left';c.textBaseline='alphabetic';
+ },
  startFeed(){
   this.stopFeed();
   if(typeof RTCPeerConnection==='undefined'||!HTMLCanvasElement.prototype.captureStream)return;
@@ -2195,11 +2248,14 @@ const Net={
    if(!this.scv){this.scv=document.createElement('canvas');this.scv.width=this.SW;this.scv.height=this.SH;}
    const ctx=this.scv.getContext('2d',{alpha:false});ctx.fillStyle='#000';ctx.fillRect(0,0,this.SW,this.SH);
    const stream=this.scv.captureStream(this.FPS);
-   stream.getVideoTracks().forEach(t=>{try{t.contentHint='motion';}catch(e){}});
+   stream.getVideoTracks().forEach(t=>{try{t.contentHint='detail';}catch(e){}});
    this.feed={stream};this.sctx=ctx;this.sendN=0;
+   // sebelum gameplay mulai, kanvas tidak berubah → gambar ulang pelan-pelan agar Master tetap menerima bingkai (tile tidak hitam/beku)
+   this.waitT=setInterval(()=>{if(!this.feed||this.live){clearInterval(this.waitT);this.waitT=0;return;}this.drawWait((this.waitTxt||'Bersiap')+'.'.repeat(1+Math.floor(performance.now()/400)%3));},400);
   }catch(e){console.warn('Siaran video tidak tersedia',e);this.feed=null;this.sctx=null;}
  },
  stopFeed(){
+  clearInterval(this.waitT);this.waitT=0;this.offerLoop=null;
   if(this.sendPC){try{this.sendPC.close();}catch(e){}this.sendPC=null;}
   if(this.feed){this.feed.stream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});this.feed=null;}
   this.sctx=null;this.sendN=0;
@@ -2220,20 +2276,24 @@ const Net={
  waitIce(pc,ms,needRelay){
   return new Promise(res=>{
    if(pc.iceGatheringState==='complete')return res();
-   let rt=0;
-   const done=()=>{clearTimeout(t);clearTimeout(rt);pc.removeEventListener('icegatheringstatechange',ch);pc.removeEventListener('icecandidate',cd);res();};
+   let rt=0,st=0;
+   const done=()=>{clearTimeout(t);clearTimeout(rt);clearTimeout(st);pc.removeEventListener('icegatheringstatechange',ch);pc.removeEventListener('icecandidate',cd);res();};
    const ch=()=>{if(pc.iceGatheringState==='complete')done();};
-   const cd=ev=>{if(needRelay&&ev.candidate&&ev.candidate.type==='relay'&&!rt)rt=setTimeout(done,350);};   // ada kandidat relay: cukup tunggu sebentar
+   const cd=ev=>{
+    const c=ev.candidate;if(!c)return;
+    if(needRelay){if(c.type==='relay'&&!rt)rt=setTimeout(done,350);}   // ada kandidat relay: cukup tunggu sebentar
+    else if(c.type==='srflx'&&!st)st=setTimeout(done,450);            // tanpa TURN: alamat publik (STUN) sudah ada → jangan tunggu sampai pengumpulan "complete"
+   };
    const t=setTimeout(done,ms);pc.addEventListener('icegatheringstatechange',ch);pc.addEventListener('icecandidate',cd);
   });
  },
- /* Batas keras siaran: 640x360 (kanvas), <=30 fps, <=800 kbps. Jaringan lemah → turunkan kualitas gambar, bukan fps. */
+ /* Batas keras siaran: 640x360 (kanvas), 24 fps, <=800 kbps. Resolusi DIKUNCI 360p: jaringan lemah → fps yang turun (bukan resolusi). */
  capSender(pc){
   pc.getSenders().forEach(sn=>{try{
    if(!sn.track||sn.track.kind!=='video')return;
    const pr=sn.getParameters();pr.encodings=pr.encodings&&pr.encodings.length?pr.encodings:[{}];
    Object.assign(pr.encodings[0],{maxBitrate:this.BITRATE,maxFramerate:this.FPS,scaleResolutionDownBy:1,priority:'high',networkPriority:'high'});
-   pr.degradationPreference='maintain-framerate';
+   pr.degradationPreference='maintain-resolution';
    sn.setParameters(pr).catch(()=>{});
   }catch(e){}});
  },
@@ -2242,7 +2302,7 @@ const Net={
   this.sendBusy=true;
   try{
    const ice=await this.getIce(),feed=this.feed;
-   if(!this.live||this.feed!==feed)return;
+   if(!this.on||this.feed!==feed)return;
    if(this.sendPC){try{this.sendPC.close();}catch(e){}this.sendPC=null;}
    const pc=this.sendPC=new RTCPeerConnection(ice);
    feed.stream.getTracks().forEach(t=>pc.addTrack(t,feed.stream));
@@ -2258,6 +2318,23 @@ const Net={
   }catch(e){if(e.status===401||e.status===404)this.handleErr(e);}
   finally{this.sendBusy=false;}
  },
+ /* pemain: long-poll offer dari Master sampai video tersambung (setelah itu cukup cadangan lewat balasan `stat`) */
+ async listenOffer(){
+  const feed=this.feed,round=this.round;
+  if(!feed||this.offerLoop===feed||this.role!=='player')return;
+  this.offerLoop=feed;const t0=Date.now();
+  try{
+   while(this.on&&this.feed===feed&&this.round===round&&Date.now()-t0<90000){
+    const pc=this.sendPC,st=pc&&(pc.connectionState||pc.iceConnectionState);
+    if(st==='connected'||st==='completed')break;
+    let j;
+    try{j=await this.sig({g:round,n:this.sendN,wait:this.sendN?2500:5000});}
+    catch(e){if(e.status===401||e.status===404){this.handleErr(e);return;}await this.sleep(600);continue;}
+    if(j.idle||j.closed)break;   // ronde berakhir / room ditutup: alur normal (stat/polling) yang menanganinya
+    if(j.offer&&j.offer.n!==this.sendN){await this.answerOffer(j.offer);await this.sleep(250);}
+   }
+  }finally{if(this.offerLoop===feed)this.offerLoop=null;}
+ },
  /* ---- sisi Master: satu koneksi per pemain ---- */
  lowLatency(recv){
   try{if('jitterBufferTarget' in recv)recv.jitterBufferTarget=0;}catch(e){}
@@ -2271,7 +2348,7 @@ const Net={
   if(!t)return;
   if(prev){try{prev.pc.close();}catch(e){}}
   const ice=await this.getIce();this.iceRelay=ice.relay;
-  if(!this.on||this.round!==round||!this.room||this.room.phase!=='playing')return;
+  if(!this.on||this.round!==round||!this.room||(this.room.phase!=='playing'&&this.room.phase!=='loading'))return;
   // percobaan ke-2 dst. (±9 dtk belum tersambung): paksa lewat relay TURN (jalur P2P/STUN terbukti tidak tembus di jaringan ini)
   const cfg=(n>=2&&ice.relay)?Object.assign({},ice,{iceTransportPolicy:'relay'}):ice;
   const pc=new RTCPeerConnection(cfg),l=this.links[slot]={pc,n,an:prev?prev.an:0,t:Date.now(),ok:false,busy:true};
@@ -2283,8 +2360,25 @@ const Net={
    await this.waitIce(pc,4000,ice.relay);
    if(this.links[slot]!==l||this.round!==round)return;
    await this.call('signal',{kind:'offer',to:String(slot),n,sdp:pc.localDescription.sdp});
+   this.listenAnswers();
   }catch(e){if(e.status===401||e.status===404)this.handleErr(e);}
   l.busy=false;
+ },
+ /* Master: long-poll answer dari pemain selama masih ada offer yang belum dijawab (menggantikan menunggu polling `state` 0,6 dtk) */
+ async listenAnswers(){
+  if(this.ansLoop||this.role!=='master')return;
+  this.ansLoop=true;const round=this.round,t0=Date.now();
+  try{
+   while(this.on&&this.role==='master'&&this.round===round&&Date.now()-t0<120000){
+    const ids=Object.keys(this.links);
+    if(!ids.some(id=>this.links[id].an!==this.links[id].n))break;   // semua offer sudah dijawab
+    let j;
+    try{j=await this.sig({g:round,an:ids.map(id=>id+':'+this.links[id].an).join(','),wait:5000});}
+    catch(e){if(e.status===401||e.status===404){this.handleErr(e);return;}await this.sleep(600);continue;}
+    if(j.idle||j.closed)break;
+    if(j.sigs)for(const k of Object.keys(j.sigs))await this.gotAnswer(k,j.sigs[k]);
+   }
+  }finally{this.ansLoop=false;}
  },
  async gotAnswer(slot,a){
   const l=this.links[slot];if(!l||!a||a.n!==l.n||l.an===a.n)return;
@@ -2293,11 +2387,12 @@ const Net={
  },
  maintainLinks(m){
   if(this.role!=='master')return;
-  if(m.phase!=='playing'){this.closeLinks();return;}
+  if(m.phase!=='playing'&&m.phase!=='loading'){this.closeLinks();return;}
   m.players.forEach(p=>{
    if(!p||!p.part)return;
    const slot=p.slot,l=this.links[slot];
    if(p.result||!p.connected){if(l&&p.result)this.closeLink(slot);return;}
+   if(m.phase==='loading'&&!p.loaded)return;   // tawarkan hanya ke pemain yang sudah selesai memuat level (feed-nya siap menjawab)
    if(!l){this.openLink(slot);return;}
    const bad=['failed','disconnected','closed'].includes(l.pc.connectionState);
    if(!l.ok&&!l.busy&&(bad||Date.now()-l.t>9000)&&l.n<8)this.openLink(slot);
@@ -2342,7 +2437,7 @@ const Net={
     ov=(rs.status==='win'?'✔ SELESAI':rs.status==='dc'?'⚠ TERPUTUS':'✖ GAGAL')+'\n'+rs.score+' poin'+(rs.status!=='win'&&rs.reason?'\n'+rs.reason:'');
    }
    else if(!p.connected)ov='⚠ TERPUTUS';
-   else if(rm.phase==='loading')ov='Memuat level…';
+   else if(rm.phase==='loading'&&!t.got)ov=p.loaded?'Menyambungkan video…':'Memuat level…';
    else if(rm.phase==='playing'&&!t.got)ov=this.linkText(p.slot);
    else if(rm.phase==='lobby')ov=p.ready?'SIAP':'Belum siap';
    t.ov.textContent=ov;t.ov.classList.toggle('hide',!ov);
@@ -2379,7 +2474,7 @@ const Net={
    if(p.connected){n++;if(p.ready)rd++;}
    mk('PEMAIN '+(s-1),p.name+(this.slot===s?' (kamu)':''),!p.connected?'⚠ TERPUTUS':(p.ready?'✔ SIAP':'… BELUM SIAP'),!p.connected?'chip-off':(p.ready?'chip-ok':'chip-wait'),this.slot===s);
   });
-  const lobby=rm.phase==='lobby',min=rm.min||4,can=isM&&lobby&&n>=min&&rd===n;
+  const lobby=rm.phase==='lobby',min=rm.min||2,can=isM&&lobby&&n>=min&&rd===n;
   const me=this.me();
   let hint;
   if(!lobby)hint='Pertandingan sedang berlangsung…';
