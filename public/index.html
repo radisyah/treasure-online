@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#050912">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>TREAHUNT</title>
+<title>TROVERAID</title>
 <style>
 :root{--bg:#050912;--panel:rgba(9,20,38,.95);--line:#1f4a6e;--cyan:#35e0ff;--yellow:#ffd23f;--red:#ff4d5e;--green:#3dff9a;--text:#e6f1ff;--dim:#8aa4c4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{font-size:16px;height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -389,7 +389,7 @@ body.touch .btn.small{min-height:2.4rem;padding:.4rem .8rem}
   <div class="card col mleft">
     <div class="mhead">
     <div class="mlogo" aria-hidden="true">💎</div>
-    <h1 class="title">TREAHUNT</h1>
+    <h1 class="title">TROVERAID</h1>
     <p class="mtag">Jelajahi kuil kuno, <b>jawab cepat</b> teka-teki, dan buka semua peti harta sebelum waktu habis!</p>
     </div>
     <div class="mbtns">
@@ -516,7 +516,7 @@ show(0);
 </div></div>
 
 <div id="credits" class="screen"><div class="card"><h2>KREDIT</h2>
-  <p><b>TREAHUNT</b><br>Game top-down: berburu harta karun.</p>
+  <p><b>TROVERAID</b><br>Game top-down: berburu harta karun.</p>
   <p>Dibangun dengan HTML, CSS, JavaScript, dan Three.js (r128, dimuat dari CDN cdnjs). Seluruh objek 3D, suara, dan soal dibuat secara prosedural lewat kode.</p>
   <p class="dim">Pengembang: (isi nama Anda di sini)</p>
   <div class="row"><button class="btn" data-back>KEMBALI</button></div>
@@ -904,7 +904,9 @@ const Sfx={
 /* ===================== 7. THREE.JS: RENDERER & SCENE ===================== */
 let renderer;
 try{
-  renderer=new THREE.WebGLRenderer({canvas:$('gl'),antialias:true,powerPreference:'high-performance'});
+  let AA=(window.devicePixelRatio||1)<1.5;   // MSAA hanya di layar 1x; di layar HiDPI (laptop modern) tidak terlihat bedanya tetapi sangat membebani iGPU
+  try{const o=new URLSearchParams(location.search).get('aa')??localStorage.getItem('troveraid_aa');if(o==='0')AA=false;else if(o==='1')AA=true;}catch(e){}
+  renderer=new THREE.WebGLRenderer({canvas:$('gl'),antialias:AA,stencil:false,powerPreference:'high-performance'});
 }catch(e){fatal('WebGL tidak tersedia di browser/perangkat ini, sehingga arena 3D tidak dapat ditampilkan. Coba browser desktop modern lain atau aktifkan akselerasi hardware.');return;}
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.NoToneMapping;
@@ -1906,7 +1908,7 @@ function bindTouch(){
    pemain menjawab; sinyal lewat /api/room, video TIDAK lewat server). Tanpa server TURN, video hanya tembus sebagian jaringan. */
 const DEVST=['Undiscovered','Discovered','Interacting','Puzzle Active','Failed','Disabled'];
 const Net={
- FW:1280,FH:720,ZOOMK:1.5,POSE_HZ:20,   /* tile Master dirender lokal 1280x720 (720p) @ refresh layar (60 fps); layar yang di-ZOOM 1920x1080; pemain hanya mengirim data posisi ±20x/dtk (ubah FW/FH untuk resolusi lain) */
+ FW:1280,FH:720,ZOOMK:1.5,POSE_HZ:20,MV_SCALES:[1,.85,.72,.6,.5],   /* tile Master dirender lokal 1280x720 (720p) @ refresh layar (60 fps); layar yang di-ZOOM 1920x1080; pemain hanya mengirim data posisi ±20x/dtk (ubah FW/FH untuk resolusi lain) */
  dc:null,snapT:0,mv:null,
  API:'/api/room',SKEY:'th3d_online_session',
  STUN_ONLY:{iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}],relay:false},
@@ -1987,7 +1989,7 @@ const Net={
    el.innerHTML='<div class="mvh"><b>PEMAIN '+(s-1)+'</b><span class="mvn">—</span><span class="mvfps"></span><span class="mvs dim"></span><button class="mvb" data-a="map">PETA</button><button class="mvb" data-a="obj">OBJEKTIF</button><button class="mvb" data-a="zoom">ZOOM</button></div><div class="mvw"><canvas width="'+this.FW+'" height="'+this.FH+'"></canvas><video muted playsinline autoplay></video><canvas class="mvmap" width="220" height="150"></canvas><div class="mvhud"></div><div class="mvtoasts"></div><div class="mvprompt"></div><div class="mvq"></div><div class="mvo">Slot kosong</div></div><div class="mvf"><span class="f1"></span><span class="f2"></span><span class="f3"></span><span class="f4"></span></div>';
    grid.appendChild(el);
    const cv=el.querySelector('canvas');
-   this.tiles.push({el,cv,ctx:cv.getContext('2d'),ov:el.querySelector('.mvo'),vid:el.querySelector('video'),fps:el.querySelector('.mvfps'),map:el.querySelector('.mvmap'),hud:el.querySelector('.mvhud'),qv:el.querySelector('.mvq'),nt:el.querySelector('.mvtoasts'),pr:el.querySelector('.mvprompt'),prK:'',bMap:el.querySelector('[data-a=map]'),bObj:el.querySelector('[data-a=obj]'),bZoom:el.querySelector('[data-a=zoom]'),full:false,showObj:false,uiT:0,qKey:'',lastVf:0,nm:el.querySelector('.mvn'),st:el.querySelector('.mvs'),f1:el.querySelector('.f1'),f2:el.querySelector('.f2'),f3:el.querySelector('.f3'),f4:el.querySelector('.f4'),got:false});
+   this.tiles.push({el,cv,ctx:cv.getContext('2d',{alpha:false}),ov:el.querySelector('.mvo'),vid:el.querySelector('video'),fps:el.querySelector('.mvfps'),map:el.querySelector('.mvmap'),hud:el.querySelector('.mvhud'),qv:el.querySelector('.mvq'),nt:el.querySelector('.mvtoasts'),pr:el.querySelector('.mvprompt'),prK:'',bMap:el.querySelector('[data-a=map]'),bObj:el.querySelector('[data-a=obj]'),bZoom:el.querySelector('[data-a=zoom]'),full:false,showObj:false,uiT:0,qKey:'',lastVf:0,nm:el.querySelector('.mvn'),st:el.querySelector('.mvs'),f1:el.querySelector('.f1'),f2:el.querySelector('.f2'),f3:el.querySelector('.f3'),f4:el.querySelector('.f4'),got:false});
   }
   this.tiles.forEach(t=>{
    t.bMap.onclick=()=>{t.full=!t.full;t.bMap.classList.toggle('on',t.full);t.uiT=0;};
@@ -2426,7 +2428,7 @@ const Net={
   });
  },
  closeRtc(){
-  this.mv=null;this.stopFeed();this.closeLinks();
+  this.mvRestore();this.mv=null;this.stopFeed();this.closeLinks();
   this.tiles.forEach(t=>{t.vid.srcObject=null;t.vid.style.display='none';t.cv.style.display='';t.fps.textContent='';t.got=false;});
  },
  linkText(slot){
@@ -2437,10 +2439,41 @@ const Net={
 
  /* ---- tampilan room master ---- */
  /* ---- Master merender sendiri keempat pandangan dari data posisi (kamera sama seperti pemain) ---- */
+ /* ---- OPTIMASI RENDER ROOM MASTER ----
+    Master merender 4 pandangan per frame di GPU laptop. Yang dilakukan agar tetap 60 fps:
+    1) resolusi render dinamis (DRS): turun/naik otomatis mengikuti beban GPU (lihat mvFrame)
+    2) bayangan & outline hanya aktif saat satu layar di-ZOOM (grid 4 layar tanpa keduanya)
+    3) lampu peti dibatasi 3 lampu terdekat per layar (jumlah lampu tetap -> shader tidak dikompilasi ulang)
+    4) layar pemain yang diam dirender 30 fps, layar >100 Hz dibatasi, MSAA mati di layar HiDPI */
+ mvShadow(on){
+  if(this.mvSh===on)return;this.mvSh=on;
+  OUT.visible=on;dirLight.castShadow=on;if(player.spot)player.spot.castShadow=false;
+ },
+ mvPrep(){
+  const w=world;if(!w)return;
+  if(!this.mvPool)this.mvPool=[0,1,2].map(()=>{const l=new THREE.PointLight(0xffc860,0,7,2);scene.add(l);return l;});
+  w.devs.forEach(d=>{d.glow.visible=false;});
+  this.mvShadow(!!this.mvZoom);
+ },
+ mvRestore(){
+  try{
+   if(this.mvPool){this.mvPool.forEach(l=>{if(l.parent)l.parent.remove(l);});this.mvPool=null;}
+   if(typeof world!=='undefined'&&world)world.devs.forEach(d=>{if(d.glow)d.glow.visible=true;});
+   if(this.mvSh!==undefined){this.mvSh=undefined;OUT.visible=true;applyQuality();}
+  }catch(e){console.error('mvRestore',e);}
+ },
+ mvLights(c){
+  const pool=this.mvPool;if(!pool)return;
+  const devs=world.devs;let n0=null,n1=null,n2=null,d0=81,d1=81,d2=81;
+  for(let i=0;i<devs.length;i++){const d=devs[i],dx=d.x-c.x,dz=d.z-c.z,q=dx*dx+dz*dz;
+   if(q<d0){n2=n1;d2=d1;n1=n0;d1=d0;n0=d;d0=q;}else if(q<d1){n2=n1;d2=d1;n1=d;d1=q;}else if(q<d2){n2=d;d2=q;}}
+  const a=[n0,n1,n2];
+  for(let i=0;i<3;i++){const l=pool[i],d=a[i];if(d){l.position.set(d.x,1.5,d.z+.3);l.intensity=d.glow.intensity;}else l.intensity=0;}
+ },
  mvInit(level){
-  this.mv={slots:{},ready:false,fr:0,t0:performance.now()};
+  this.mv={slots:{},ready:false,fr:0,t0:performance.now(),acc:0,fn:0,lastR:0,ema:16.7,n:0,lv:{g:2,z:3},ban:{},gap:8000,chg:performance.now(),hold:performance.now()+2500,probing:false,probeEnd:0,half:false};
   const mv=this.mv;
-  setTimeout(()=>{try{buildWorld(LEVELS[clamp(level,1,LEVELS.length)-1]);if(this.mv===mv)mv.ready=true;}catch(e){console.error('Master gagal membangun arena',e);}},80);
+  setTimeout(()=>{try{buildWorld(LEVELS[clamp(level,1,LEVELS.length)-1]);this.mvPrep();if(this.mv===mv)mv.ready=true;}catch(e){console.error('Master gagal membangun arena',e);}},80);
  },
  mvRecv(slot,txt){
   const mv=this.mv;if(!mv)return;
@@ -2498,29 +2531,58 @@ const Net={
  mvFrame(dt){
   const mv=this.mv;
   if(!mv||!mv.ready||this.role!=='master'||UI.cur!=='masterview'||!this.room||!world)return;
-  const zm=this.mvZoom|0,W=zm?Math.round(this.FW*this.ZOOMK):this.FW,H=zm?Math.round(this.FH*this.ZOOMK):this.FH,cv=renderer.domElement;   // default 720p; layar yang di-zoom dirender 1080p, layar lain dihentikan
+  const now=performance.now();
+  mv.acc+=dt;
+  if(mv.lastR&&now-mv.lastR<10)return;   // layar >100 Hz: cukup ±60-100 fps
+  const dtA=Math.min(.1,mv.acc),raw=mv.lastR?now-mv.lastR:16.7;mv.acc=0;mv.lastR=now;
+  const zm=this.mvZoom|0,mode=zm?'z':'g',S=this.MV_SCALES;
+  // --- resolusi dinamis: turun cepat bila <~52 fps, naik pelan dengan uji coba berkala (level yang gagal dilarang 60 dtk) ---
+  if(now>mv.hold&&raw<100){
+   mv.ema+=(raw-mv.ema)*.08;mv.n++;
+   const lv=mv.lv[mode];
+   if(mv.ema>19&&mv.n>=15){
+    if(mv.probing){mv.ban[mode+lv]=now+60000;mv.gap=Math.min(mv.gap*2,64000);}
+    if(lv<S.length-1)mv.lv[mode]=lv+1;else if(!zm)mv.half=true;
+    mv.probing=false;mv.n=0;mv.ema=16.7;mv.chg=now;mv.hold=now+700;
+   }else if(mv.ema<=18){
+    if(mv.probing&&now>mv.probeEnd){mv.probing=false;mv.gap=8000;}
+    else if(!mv.probing&&now-mv.chg>mv.gap){
+     if(mv.half){mv.half=false;mv.probing=true;}
+     else if(lv>0&&now>(mv.ban[mode+(lv-1)]||0)){mv.lv[mode]=lv-1;mv.probing=true;}
+     if(mv.probing){mv.probeEnd=now+2500;mv.chg=now;mv.n=0;mv.hold=now+500;}
+    }
+   }
+  }
+  const sc=S[mv.lv[mode]],bw=zm?Math.round(this.FW*this.ZOOMK):this.FW,bh=zm?Math.round(this.FH*this.ZOOMK):this.FH;
+  const W=Math.round(bw*sc),H=Math.round(bh*sc),cv=renderer.domElement;   // 720p x skala; layar yang di-zoom 1080p x skala, layar lain dihentikan
   if(cv.width!==W||cv.height!==H){renderer.setPixelRatio(1);renderer.setSize(W,H,false);camera.aspect=W/H;camera.updateProjectionMatrix();}
-  const now=performance.now(),k=1-Math.exp(-dt*18);
+  const fn=++mv.fn,k0=18;
   this.room.players.forEach(p=>{
    if(!p||!p.part||p.result||!p.connected)return;
    if(zm&&p.slot!==zm)return;
    const s=mv.slots[p.slot],t=this.tiles[p.slot-2];
    if(!s||!s.cur||!t)return;
-   if(t.cv.width!==W||t.cv.height!==H){t.cv.width=W;t.cv.height=H;}
    const c=s.cur,g=s.tgt;
-   c.x+=(g.x-c.x)*k;c.z+=(g.z-c.z)*k;
-   let dy=g.yaw-c.yaw;while(dy>Math.PI)dy-=2*Math.PI;while(dy<-Math.PI)dy+=2*Math.PI;c.yaw+=dy*k;
-   c.fl=g.fl;if(c.fl&1)c.walk+=dt*(c.fl&2?14:9);
-   this.mvApply(s,c,dt);
+   s.acc=(s.acc||0)+dtA;
+   let dy=g.yaw-c.yaw;while(dy>Math.PI)dy-=2*Math.PI;while(dy<-Math.PI)dy+=2*Math.PI;
+   const idle=Math.abs(g.x-c.x)+Math.abs(g.z-c.z)+Math.abs(dy)<.006&&!(g.fl&1);
+   if(s.lastR&&(idle||mv.half)&&((fn+p.slot)&1))return;   // pemain diam / mode darurat: layar ini 30 fps (bergantian)
+   const d2=s.acc,k=1-Math.exp(-d2*k0);s.acc=0;s.lastR=now;
+   if(t.cv.width!==W||t.cv.height!==H){t.cv.width=W;t.cv.height=H;}
+   c.x+=(g.x-c.x)*k;c.z+=(g.z-c.z)*k;c.yaw+=dy*k;
+   c.fl=g.fl;if(c.fl&1)c.walk+=d2*(c.fl&2?14:9);
+   this.mvApply(s,c,d2);
+   this.mvLights(c);
    renderer.render(scene,camera);
    t.ctx.drawImage(cv,0,0,W,H);t.lastVf=now;
    if(now-t.uiT>120){t.uiT=now;try{this.mvUi(s,t);}catch(e){console.error(e);}}
   });
   mv.fr++;
-  if(now-mv.t0>=1000){const f=Math.round(mv.fr*1000/(now-mv.t0));mv.fr=0;mv.t0=now;this.tiles.forEach(t=>{t.fps.textContent=t.got?f+' FPS':'';});}
+  if(now-mv.t0>=1000){const f=Math.round(mv.fr*1000/(now-mv.t0));mv.fr=0;mv.t0=now;const tag=f+' FPS · '+H+'p'+(mv.half?' ½':'');this.tiles.forEach(t=>{t.fps.textContent=t.got?tag:'';});}
  },
  mvSetZoom(slot){
-  this.mvZoom=slot|0;
+  this.mvZoom=slot|0;this.mvShadow(!!slot);
+  if(this.mv){const m=this.mv,n=performance.now();m.hold=n+1500;m.n=0;m.ema=16.7;m.chg=n;m.probing=false;m.half=false;}
   const g=$('mvGrid');g.classList.toggle('zoomed',!!slot);
   this.tiles.forEach((t,i)=>{const z=slot===i+2;t.el.classList.toggle('zoom',z);t.bZoom.classList.toggle('on',z);t.bZoom.textContent=z?'KECILKAN':'ZOOM';t.uiT=0;});
   if(!slot)this.tiles.forEach(t=>{if(t.cv.width!==this.FW){t.cv.width=this.FW;t.cv.height=this.FH;}});

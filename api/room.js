@@ -1,5 +1,5 @@
 'use strict';
-/* TREAHUNT Online — satu Vercel Function (/api/room), state di Upstash Redis.
+/* TROVERAID Online — satu Vercel Function (/api/room), state di Upstash Redis.
    Pola sama dengan angry-birds-online: kode ruangan 5 karakter, token sesi, polling, kunci per-room, tenggat "malas" lewat polling.
    Peran: 1 Room Master (menonton, tidak bermain) + 2–4 pemain (kursi/slot 2..5, sama seperti server WebSocket lama). */
 const crypto = require('crypto');

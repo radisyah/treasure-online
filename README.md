@@ -1,6 +1,6 @@
-# TREAHUNT — Mode Online (1 Room Master + 2–4 pemain) untuk Vercel
+# TROVERAID — Mode Online (1 Room Master + 2–4 pemain) untuk Vercel
 
-Versi online *TREAHUNT* dengan cara kerja yang sama seperti **angry-birds-online**:
+Versi online *TROVERAID* dengan cara kerja yang sama seperti **angry-birds-online**:
 kode room 5 karakter, token sesi di `localStorage`, polling ke satu Vercel Function (`/api/room`), dan state di **Upstash Redis**.
 
 > Versi lama memakai server WebSocket (`server.js`) yang harus berjalan terus di laptop. Vercel bersifat *serverless* (tidak ada proses yang
@@ -71,6 +71,15 @@ Fungsi Vercel dipasang di region **sin1 (Singapura)**; pilih juga region Upstash
 Kredensial hanya diberikan server ke peserta room (`GET /api/room?action=ice`). Tanpa TURN, tile video menampilkan
 "server TURN belum diatur" bila jaringan memblokir P2P; skor dan status tetap tampil. Lalu-lintas yang lewat relay dihitung ke kuota penyedia
 (hanya beberapa KB/dtk per pemain).
+
+## Performa Room Master (target 60 fps dengan 4 pemain)
+Master merender 4 pandangan sekaligus di GPU laptopnya, jadi beban ada di GPU Master, bukan di jaringan. Yang sudah dioptimalkan di `public/index.html` (objek `Net`, fungsi `mvFrame`, `mvShadow`, `mvLights`):
+- **Resolusi render dinamis (DRS)**: mulai dari 72 % × 720p, lalu turun cepat bila di bawah ±52 fps dan naik pelan lewat uji coba berkala (level yang gagal dilarang 60 dtk). Label di tiap tile menampilkan `60 FPS · 518p` — angka kedua = resolusi render saat ini. Bila sudah di skala terendah (50 %) dan masih berat, layar bergantian 30 fps (tanda ½).
+- **Grid 4 layar tanpa bayangan & tanpa outline hitam**; keduanya aktif lagi saat satu layar di-**ZOOM** (hanya 1 layar dirender).
+- **Lampu peti dibatasi 3 terdekat per layar** (jumlah lampu tetap, jadi shader tidak dikompilasi ulang antarlayar).
+- **Layar pemain yang diam dirender 30 fps**; layar >100 Hz dibatasi; kanvas tile 2D tanpa alpha.
+- **MSAA otomatis mati di layar HiDPI** (devicePixelRatio ≥ 1,5). Paksa: `?aa=0` / `?aa=1` di URL, atau `localStorage.troveraid_aa`.
+Tips sisi Master: colok charger + mode daya *Best performance*, Chrome/Edge dengan *hardware acceleration* aktif, tutup tab/aplikasi lain, perbarui driver AMD, dan pakai **satu** jendela Master saja.
 
 ## Layar penuh otomatis di HP
 - **Android (Chrome dll.)**: layar penuh + kunci landscape dicoba pada **setiap ketukan** sampai berhasil (browser mewajibkan gestur pengguna, jadi tidak bisa 100% tanpa ketukan), dan masuk lagi di ketukan berikutnya bila tidak sengaja keluar. Bila pemain sengaja keluar lewat tombol layar penuh, game tidak memaksanya masuk lagi.
