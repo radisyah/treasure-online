@@ -2669,6 +2669,7 @@ const Net={
    if(!p)ov='Slot kosong';
    else if(p.result){
     const rs=p.result;
+    t.qKey='';t.qv.style.display='none';t.prK='';t.pr.style.display='none';t.nt.textContent='';   // pemain sudah selesai/gagal: panel soal, prompt & notifikasi terakhir dibersihkan
     ov=(rs.status==='win'?'✔ SELESAI':rs.status==='dc'?'⚠ TERPUTUS':'✖ GAGAL')+'\n'+rs.score+' poin'+(rs.status!=='win'&&rs.reason?'\n'+rs.reason:'');
    }
    else if(!p.connected)ov='⚠ TERPUTUS';
