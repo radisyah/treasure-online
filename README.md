@@ -80,6 +80,7 @@ Master merender 4 pandangan sekaligus di GPU laptopnya, jadi beban ada di GPU Ma
 - **Layar pemain yang diam dirender 30 fps**; layar >100 Hz dibatasi; kanvas tile 2D tanpa alpha.
 - **MSAA otomatis mati di layar HiDPI** (devicePixelRatio ≥ 1,5). Paksa: `?aa=0` / `?aa=1` di URL, atau `localStorage.troveraid_aa`.
 Tips sisi Master: colok charger + mode daya *Best performance*, Chrome/Edge dengan *hardware acceleration* aktif, tutup tab/aplikasi lain, perbarui driver AMD, dan pakai **satu** jendela Master saja.
+- **HUD tile = salinan HUD layar pemain** (LEVEL, timer, HARTA, JEBAKAN, OBJEKTIF + lokasi, minimap, SKOR POTENSIAL, PETUNJUK GRATIS, STAMINA, Senter, prompt [E], notifikasi). Digambar di kanvas virtual 1280×720 yang diskalakan mengikuti ukuran tile; klik judul OBJEKTIF untuk menciutkan.
 
 ## Layar penuh otomatis di HP
 - **Android (Chrome dll.)**: layar penuh + kunci landscape dicoba pada **setiap ketukan** sampai berhasil (browser mewajibkan gestur pengguna, jadi tidak bisa 100% tanpa ketukan), dan masuk lagi di ketukan berikutnya bila tidak sengaja keluar. Bila pemain sengaja keluar lewat tombol layar penuh, game tidak memaksanya masuk lagi.
